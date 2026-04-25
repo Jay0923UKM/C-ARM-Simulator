@@ -70,6 +70,9 @@
         }
         .vis-label { position: absolute; top: 10px; left: 15px; font-size: 10px; color: #666; letter-spacing: 2px; z-index: 10; }
         .vis-scene { width: 200px; height: 200px; transform-style: preserve-3d; transform: rotateX(60deg) rotateZ(-45deg); }
+        
+        /* Grouped Patient and Table to move together */
+        .vis-bed-group { position: absolute; left: 0; top: 0; width: 100%; height: 100%; transform-style: preserve-3d; transition: transform 0.1s linear;}
         .vis-table { width: 80px; height: 280px; background: rgba(30,35,45,0.8); border: 1px solid #444; border-radius: 5px; position: absolute; left: 60px; top: -40px; transform: translateZ(-20px); }
         .vis-patient { width: 44px; height: 200px; background: #5a6270; border-radius: 10px; position: absolute; left: 78px; top: 0px; transform: translateZ(5px); box-shadow: inset 0 0 10px #000; }
         .vis-head { width: 36px; height: 36px; background: #6b7485; border-radius: 50%; position: absolute; top: -40px; left: 4px; box-shadow: inset 0 0 5px #000; }
@@ -229,8 +232,10 @@
             <div class="visualizer-pane">
                 <div class="vis-label">C-ARM ISOCENTER RADAR (ISO 45°)</div>
                 <div class="vis-scene">
-                    <div class="vis-table"></div>
-                    <div class="vis-patient"><div class="vis-head"></div></div>
+                    <div class="vis-bed-group" id="vis-bed-group">
+                        <div class="vis-table"></div>
+                        <div class="vis-patient"><div class="vis-head"></div></div>
+                    </div>
                     <div class="vis-operator">YOU</div>
                     
                     <div class="c-arm-assembly" id="c-arm-graphic">
@@ -450,7 +455,7 @@
                 const orbit = viewer.getCameraOrbit(); const target = viewer.getCameraTarget();
                 viewer.cameraOrbit = `${orbit.theta}rad ${orbit.phi}rad ${orbit.radius}m`;
                 viewer.cameraTarget = `${target.x}m ${target.y}m ${target.z}m`;
-                viewer.cameraControls = false; saveCalibrations();
+                viewer.cameraControls = false; 
             }
         });
 
@@ -480,31 +485,25 @@
         const loadingOverlay = document.getElementById('loading-overlay');
         
         let apThetaBase = 0; let apPhiBase = 90; let panXBase = 0; let panYBase = 0; let zoomBase = null;
-        const orbitStep = 1; const panStep = 0.01; const radiusZoomStep = 0.02; 
+        
+        // HARDCODED STARTUP PRESETS 
+        const modelPresets = {
+            "pelvis.glb": { tx: -0.000, ty: 0.000, tz: 0.010, rad: 1.843, th: 88.7, phi: 90.6, fov: 30.0 },
+            "skeleton.glb": { tx: 0.000, ty: 3.910, tz: -0.000, rad: 22.197, th: 0.0, phi: 90.0, fov: 14.7 },
+            "heart.glb": { tx: 0.0, ty: 0.0, tz: 0.0, rad: 2.0, th: 0.0, phi: 90.0, fov: 30.0 } 
+        };
 
-        function loadCalibrations() {
-            const ds = modelSelect.value;
-            const saved = localStorage.getItem(`carm_settings_${ds}`);
-            if (saved) {
-                const parsed = JSON.parse(saved);
-                apThetaBase = parsed.apThetaBase || 0; apPhiBase = parsed.apPhiBase || 90;
-                panXBase = parsed.panXBase || 0; panYBase = parsed.panYBase || 0; zoomBase = parsed.zoomBase || null;
-            } else {
-                apThetaBase = 0; apPhiBase = 90; panXBase = 0; panYBase = 0; zoomBase = null;
-            }
-        }
-
-        function saveCalibrations() {
-            const ds = modelSelect.value;
-            const settings = { apThetaBase, apPhiBase, panXBase, panYBase, zoomBase };
-            localStorage.setItem(`carm_settings_${ds}`, JSON.stringify(settings));
-        }
-
-        function applyCalibrationToCamera() {
-            if (zoomBase !== null) { viewer.cameraOrbit = `${apThetaBase}deg ${apPhiBase}deg ${zoomBase}m`; } 
-            else { viewer.cameraOrbit = `${apThetaBase}deg ${apPhiBase}deg auto`; }
-            viewer.cameraTarget = `${panXBase}m ${panYBase}m 0m`;
-            updateDashboard();
+        function loadPreset(modelName) {
+            const preset = modelPresets[modelName] || modelPresets["heart.glb"];
+            viewer.cameraTarget = `${preset.tx}m ${preset.ty}m ${preset.tz}m`;
+            viewer.cameraOrbit = `${preset.th}deg ${preset.phi}deg ${preset.rad}m`;
+            viewer.fieldOfView = `${preset.fov}deg`;
+            
+            apThetaBase = preset.th;
+            apPhiBase = preset.phi;
+            panXBase = preset.tx;
+            panYBase = preset.ty;
+            zoomBase = preset.rad;
         }
 
         function triggerMaterializeEffect() {
@@ -533,16 +532,12 @@
         }
 
         modelSelect.addEventListener('change', (event) => {
-            zoomBase = null; 
             const newSrc = event.target.value;
             
-            // Instantly clear the screen and show the loading overlay
-            viewer.src = '';
+            viewer.src = ''; 
             loadingOverlay.classList.add('active');
             
-            // Wait 50ms so the screen has time to turn black before the heavy JS locking starts
             setTimeout(() => { viewer.src = newSrc; }, 50);
-            
             document.getElementById('header-dataset-name').innerText = `DATASET: ${event.target.options[event.target.selectedIndex].text.toUpperCase()}`;
         });
 
@@ -567,16 +562,9 @@
                 console.warn("Transparency effect skipped.", error);
             }
 
-            loadCalibrations();
+            loadPreset(modelSelect.value);
+            updateDashboard();
             
-            if(zoomBase === null || isNaN(zoomBase)) { 
-                zoomBase = viewer.getCameraOrbit().radius; 
-                saveCalibrations(); 
-            }
-            
-            applyCalibrationToCamera();
-            
-            // Hide loading screen and fire the particle burst
             loadingOverlay.classList.remove('active');
             triggerMaterializeEffect();
         });
@@ -593,11 +581,36 @@
             let relTheta = Math.round(currentThetaDeg - apThetaBase); let relPhi = Math.round(currentPhiDeg - apPhiBase);
             relTheta = ((relTheta + 180) % 360) - 180; 
 
-            if (relTheta === 0) valOblique.innerText = '0° AP'; else if (relTheta > 0) valOblique.innerText = `${relTheta}° LAO`; else valOblique.innerText = `${Math.abs(relTheta)}° RAO`;
+            // Corrected clinical Gantry labels for laterals and posterior obliques
+            if (relTheta === 0) {
+                valOblique.innerText = '0° AP';
+            } else if (relTheta > 0 && relTheta < 90) {
+                valOblique.innerText = `${relTheta}° LAO`;
+            } else if (relTheta === 90) {
+                valOblique.innerText = `90° LEFT LATERAL`;
+            } else if (relTheta > 90) {
+                valOblique.innerText = `${relTheta}° LPO`;
+            } else if (relTheta < 0 && relTheta > -90) {
+                valOblique.innerText = `${Math.abs(relTheta)}° RAO`;
+            } else if (relTheta === -90) {
+                valOblique.innerText = `90° RIGHT LATERAL`;
+            } else if (relTheta < -90) {
+                valOblique.innerText = `${Math.abs(relTheta)}° RPO`;
+            }
+
             if (relPhi === 0) valTilt.innerText = '0°'; else if (relPhi < 0) valTilt.innerText = `${Math.abs(relPhi)}° CEPH`; else valTilt.innerText = `${relPhi}° CAUD`;
 
             valX.innerText = (target.x - panXBase).toFixed(2); valY.innerText = (target.y - panYBase).toFixed(2);
             cArmGraphic.style.transform = `rotateY(${relTheta}deg) rotateX(${-relPhi}deg)`;
+
+            // Update Table & Patient position in 3D Radar (Linked to CSS transforms correctly)
+            const bedGroup = document.getElementById('vis-bed-group');
+            if (bedGroup) {
+                const scale = 500 / orbit.radius; 
+                const radarX = (target.x - panXBase) * scale;      // Table right -> CSS positive right
+                const radarY = -(target.y - panYBase) * scale;     // Table sup (y decreases) -> CSS negative up
+                bedGroup.style.transform = `translate3d(${radarX}px, ${radarY}px, 0px)`;
+            }
         }
 
         function applyCameraUpdates(dTheta, dPhi) { const orbit = viewer.getCameraOrbit(); viewer.cameraOrbit = `${orbit.theta + (dTheta * Math.PI / 180)}rad ${orbit.phi + (dPhi * Math.PI / 180)}rad ${orbit.radius}m`; }
@@ -606,18 +619,26 @@
             const orbit = viewer.getCameraOrbit(); 
             const target = viewer.getCameraTarget(); 
             
+            const distanceScale = orbit.radius * 0.002; 
+            const dxScaled = dx * distanceScale;
+            const dyScaled = dy * distanceScale;
+            
             const t = orbit.theta; const p = orbit.phi;
             const rightX = Math.cos(t); const rightY = 0; const rightZ = -Math.sin(t);
             const upX = -Math.cos(p) * Math.sin(t); const upY = Math.sin(p); const upZ = -Math.cos(p) * Math.cos(t);
 
-            const newX = target.x + (dx * rightX) + (dy * upX);
-            const newY = target.y + (dx * rightY) + (dy * upY);
-            const newZ = target.z + (dx * rightZ) + (dy * upZ);
+            const newX = target.x + (dxScaled * rightX) + (dyScaled * upX);
+            const newY = target.y + (dxScaled * rightY) + (dyScaled * upY);
+            const newZ = target.z + (dxScaled * rightZ) + (dyScaled * upZ);
 
             viewer.cameraTarget = `${newX}m ${newY}m ${newZ}m`; 
         }
         
-        function applyPhysicalZoom(dRadius) { const orbit = viewer.getCameraOrbit(); viewer.cameraOrbit = `${orbit.theta}rad ${orbit.phi}rad ${Math.max(0.01, orbit.radius + dRadius)}m`; }
+        function applyPhysicalZoom(dRadiusFactor) { 
+            const orbit = viewer.getCameraOrbit(); 
+            const zoomAmount = orbit.radius * dRadiusFactor;
+            viewer.cameraOrbit = `${orbit.theta}rad ${orbit.phi}rad ${Math.max(0.01, orbit.radius + zoomAmount)}m`; 
+        }
 
         function addHoldListener(buttonId, actionFunction) {
             const button = document.getElementById(buttonId); let intervalId;
@@ -627,20 +648,25 @@
             button.addEventListener('touchstart', startAction, { passive: false }); button.addEventListener('touchend', stopAction);
         }
 
+        const orbitStep = 1; 
+        const panStep = 1.0; 
+        const radiusZoomStep = 0.02;
+
         addHoldListener('btn-rao', () => { applyCameraUpdates(-orbitStep, 0); }); addHoldListener('btn-lao', () => { applyCameraUpdates(orbitStep, 0); });
         addHoldListener('btn-ceph', () => { applyCameraUpdates(0, -orbitStep); }); addHoldListener('btn-caud', () => { applyCameraUpdates(0, orbitStep); });
         
-        addHoldListener('btn-sup', () => { applyPanUpdates(0, -panStep); }); 
-        addHoldListener('btn-inf', () => { applyPanUpdates(0, panStep); }); 
-        addHoldListener('btn-left-pan', () => { applyPanUpdates(panStep, 0); }); 
-        addHoldListener('btn-right-pan', () => { applyPanUpdates(-panStep, 0); }); 
+        // PERFECTLY MAPPED CLINICAL PAN LOGIC (Screen & Radar Relative)
+        addHoldListener('btn-sup', () => { applyPanUpdates(0, panStep); });     // Table pushes Up, Anatomy drops Inf
+        addHoldListener('btn-inf', () => { applyPanUpdates(0, -panStep); });    // Table pushes Down, Anatomy rises Sup
+        addHoldListener('btn-left-pan', () => { applyPanUpdates(-panStep, 0); }); // Table pushes Left, Anatomy shifts Right
+        addHoldListener('btn-right-pan', () => { applyPanUpdates(panStep, 0); }); // Table pushes Right, Anatomy shifts Left
         
         addHoldListener('btn-mag-in', () => { applyPhysicalZoom(-radiusZoomStep); }); 
         addHoldListener('btn-mag-out', () => { applyPhysicalZoom(radiusZoomStep); }); 
 
-        document.getElementById('btn-set-ap').addEventListener('click', () => { const orbit = viewer.getCameraOrbit(); apThetaBase = orbit.theta * (180 / Math.PI); apPhiBase = orbit.phi * (180 / Math.PI); saveCalibrations(); updateDashboard(); });
-        document.getElementById('btn-set-center').addEventListener('click', () => { const target = viewer.getCameraTarget(); panXBase = target.x; panYBase = target.y; saveCalibrations(); updateDashboard(); });
-        document.getElementById('btn-set-zoom').addEventListener('click', () => { zoomBase = viewer.getCameraOrbit().radius; saveCalibrations(); });
+        document.getElementById('btn-set-ap').addEventListener('click', () => { const orbit = viewer.getCameraOrbit(); apThetaBase = orbit.theta * (180 / Math.PI); apPhiBase = orbit.phi * (180 / Math.PI); updateDashboard(); });
+        document.getElementById('btn-set-center').addEventListener('click', () => { const target = viewer.getCameraTarget(); panXBase = target.x; panYBase = target.y; updateDashboard(); });
+        document.getElementById('btn-set-zoom').addEventListener('click', () => { zoomBase = viewer.getCameraOrbit().radius; });
 
     </script>
 </body>
