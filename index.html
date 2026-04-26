@@ -29,6 +29,8 @@
             display: flex; height: 100vh; overflow: hidden; user-select: none; 
         }
 
+        .txt-mob { display: none; } /* Hidden on desktop */
+
         /* --- INTRO SPLASH SCREEN --- */
         #intro-screen {
             position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-color: #050608; z-index: 9999;
@@ -207,6 +209,91 @@
         
         .zoom-controls { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
         .zoom-controls button { height: 45px; font-size: 16px; background-color: #0d2a33; border-color: var(--accent-blue); color: var(--accent-blue); font-weight: bold;}
+
+        /* --- RESPONSIVE DESIGN (TABLET & MOBILE) --- */
+        @media (max-width: 900px) {
+            body {
+                flex-direction: column;
+                height: 100dvh; /* Mobile viewport height fix */
+                overflow-y: auto;
+            }
+            
+            #intro-modal { padding: 30px 20px; width: 85%; }
+            .intro-modal h1 { font-size: 24px; }
+            .intro-modal p { font-size: 13px; }
+
+            .txt-desk { display: none; }
+            .txt-mob { display: inline; }
+            .arrow-mob { font-size: 18px; font-weight: bold; }
+
+            #monitor-area {
+                flex: none;
+                height: 42vh; 
+                min-height: 250px;
+                padding: 10px;
+            }
+
+            /* --- Swap Radar to Left, Screen to Right --- */
+            .screen-bezel {
+                flex-direction: row; 
+            }
+            .visualizer-pane {
+                height: 100%;
+                width: 35%; /* Radar takes up left portion */
+                min-width: 140px;
+                border-bottom: none;
+                border-right: 2px solid #222;
+            }
+            .fluoro-pane {
+                height: 100%;
+                width: 65%; /* Screen takes up right portion */
+                --cm: min(2.2vh, 2vw);
+            }
+            .vis-scene {
+                /* Scale the 3D Radar down so it fits in the narrower left pane */
+                transform: scale(0.55) rotateX(60deg) rotateZ(-45deg); 
+            }
+            .vis-label {
+                font-size: 8px; top: 5px; left: 5px;
+            }
+
+            #console-area {
+                flex: none;
+                width: 100%;
+                min-width: 0;
+                border-left: none;
+                border-top: 2px solid var(--border-color);
+                padding: 12px;
+                height: auto; 
+                overflow: visible;
+                box-sizing: border-box;
+                gap: 10px;
+            }
+
+            /* --- Smaller Mobile Buttons --- */
+            button { font-size: 10px; padding: 5px; }
+            .btn-wide { height: 34px; font-size: 11px; }
+            .btn-settings { height: 34px; font-size: 10px; }
+            
+            .d-pad { 
+                grid-template-columns: 36px 36px 36px; 
+                grid-template-rows: 36px 36px 36px; 
+                gap: 5px;
+            }
+            .zoom-controls button { height: 38px; }
+
+            /* Text sizing */
+            .dash-value { font-size: 15px; }
+            .dash-label { font-size: 9px; }
+            .console-title { font-size: 16px; }
+
+            .phys-grid { grid-template-columns: 1fr; gap: 8px; }
+            .phys-input-group input { font-size: 14px; padding: 8px; }
+            .btn-phys-apply { height: 36px; font-size: 12px; }
+
+            /* Clean up Orientation Button specific for mobile */
+            #btn-ii-shape .txt-mob { font-size: 11px; font-weight: bold; }
+        }
     </style>
 </head>
 <body>
@@ -317,7 +404,10 @@
 
         <div class="control-group" style="margin-top: 5px;">
             <h3>Detector Orientation</h3>
-            <button class="btn-wide" id="btn-ii-shape" style="background-color: #0d2a33; border-color: var(--accent-blue); color: var(--accent-blue); height: 40px; font-weight: bold; font-size: 14px; letter-spacing: 1px;">II: CROSSWISE (29x26)</button>
+            <button class="btn-wide" id="btn-ii-shape" style="background-color: #0d2a33; border-color: var(--accent-blue); color: var(--accent-blue); height: 40px; font-weight: bold; font-size: 14px; letter-spacing: 1px;">
+                <span class="txt-desk">II: CROSSWISE (29x26)</span>
+                <span class="txt-mob">CROSSWISE</span>
+            </button>
         </div>
 
         <div class="control-group">
@@ -333,10 +423,10 @@
                 <h3>Gantry (Tube)</h3>
                 <div class="d-pad-container">
                     <div class="d-pad">
-                        <button class="btn-top" id="btn-ceph">CEPH</button>
-                        <button class="btn-left" id="btn-lao">LAO</button>
-                        <button class="btn-right" id="btn-rao">RAO</button>
-                        <button class="btn-bottom" id="btn-caud">CAUD</button>
+                        <button class="btn-top" id="btn-ceph"><span class="txt-desk">CEPH</span><span class="txt-mob arrow-mob">↑</span></button>
+                        <button class="btn-left" id="btn-lao"><span class="txt-desk">LAO</span><span class="txt-mob arrow-mob">←</span></button>
+                        <button class="btn-right" id="btn-rao"><span class="txt-desk">RAO</span><span class="txt-mob arrow-mob">→</span></button>
+                        <button class="btn-bottom" id="btn-caud"><span class="txt-desk">CAUD</span><span class="txt-mob arrow-mob">↓</span></button>
                     </div>
                 </div>
             </div>
@@ -415,9 +505,9 @@
         const btnIiShape = document.getElementById('btn-ii-shape');
         
         const iiModes = [
-            { id: 'CROSSWISE (29x26)', class: 'shape-crosswise', visW: '64px', visH: '58px', visRad: '6px' },
-            { id: 'LENGTHWISE (26x29)', class: 'shape-lengthwise', visW: '58px', visH: '64px', visRad: '6px' },
-            { id: 'CIRCLE (29cm)', class: 'shape-circle', visW: '64px', visH: '64px', visRad: '50%' }
+            { desk: 'II: CROSSWISE (29x26)', mob: 'CROSSWISE', class: 'shape-crosswise', visW: '64px', visH: '58px', visRad: '6px' },
+            { desk: 'II: LENGTHWISE (26x29)', mob: 'LENGTHWISE', class: 'shape-lengthwise', visW: '58px', visH: '64px', visRad: '6px' },
+            { desk: 'II: CIRCLE (29cm)', mob: 'CIRCLE', class: 'shape-circle', visW: '64px', visH: '64px', visRad: '50%' }
         ];
         let currentModeIndex = 0;
 
@@ -426,7 +516,8 @@
             currentModeIndex = (currentModeIndex + 1) % iiModes.length;
             collimator.classList.add(iiModes[currentModeIndex].class);
             
-            btnIiShape.innerText = `II: ${iiModes[currentModeIndex].id}`;
+            // Re-inject both spans to maintain responsiveness without JS listener logic
+            btnIiShape.innerHTML = `<span class="txt-desk">${iiModes[currentModeIndex].desk}</span><span class="txt-mob">${iiModes[currentModeIndex].mob}</span>`;
             
             visDetector.style.width = iiModes[currentModeIndex].visW;
             visDetector.style.height = iiModes[currentModeIndex].visH;
@@ -484,7 +575,7 @@
         const modelSelect = document.getElementById('model-select');
         const loadingOverlay = document.getElementById('loading-overlay');
         
-        let apThetaBase = 0; let apPhiBase = 90; let panXBase = 0; let panYBase = 0; let zoomBase = null;
+        let apThetaBase = 0; let apPhiBase = 90; let panXBase = 0; let panYBase = 0; let panZBase = 0; let zoomBase = null;
         
         // HARDCODED STARTUP PRESETS 
         const modelPresets = {
@@ -503,6 +594,7 @@
             apPhiBase = preset.phi;
             panXBase = preset.tx;
             panYBase = preset.ty;
+            panZBase = preset.tz;
             zoomBase = preset.rad;
         }
 
@@ -581,7 +673,6 @@
             let relTheta = Math.round(currentThetaDeg - apThetaBase); let relPhi = Math.round(currentPhiDeg - apPhiBase);
             relTheta = ((relTheta + 180) % 360) - 180; 
 
-            // Corrected clinical Gantry labels for laterals and posterior obliques
             if (relTheta === 0) {
                 valOblique.innerText = '0° AP';
             } else if (relTheta > 0 && relTheta < 90) {
@@ -600,15 +691,33 @@
 
             if (relPhi === 0) valTilt.innerText = '0°'; else if (relPhi < 0) valTilt.innerText = `${Math.abs(relPhi)}° CEPH`; else valTilt.innerText = `${relPhi}° CAUD`;
 
-            valX.innerText = (target.x - panXBase).toFixed(2); valY.innerText = (target.y - panYBase).toFixed(2);
             cArmGraphic.style.transform = `rotateY(${relTheta}deg) rotateX(${-relPhi}deg)`;
 
-            // Update Table & Patient position in 3D Radar (Linked to CSS transforms correctly)
+            // --- RADAR PROJECTION MATH ---
+            // Convert AP baseline angles back to radians for projection
+            const t0 = apThetaBase * (Math.PI / 180);
+            const p0 = apPhiBase * (Math.PI / 180);
+
+            // Get target offset from the set isocenter (0,0) in world space
+            const dx = target.x - panXBase;
+            const dy = target.y - panYBase;
+            const dz = target.z - panZBase;
+
+            // Project world coordinates onto the AP view's horizontal and vertical planes
+            // This properly untangles X and Z regardless of how the 3D model was originally drawn
+            const screenRight = dx * Math.cos(t0) + dz * -Math.sin(t0);
+            const screenUp = dx * (-Math.cos(p0) * Math.sin(t0)) + dy * Math.sin(p0) + dz * (-Math.cos(p0) * Math.cos(t0));
+
+            // Update digital dashboard with actual physical table coordinates
+            valX.innerText = (-screenRight).toFixed(2); 
+            valY.innerText = (-screenUp).toFixed(2);
+
+            // Update Table & Patient position in 3D Radar
             const bedGroup = document.getElementById('vis-bed-group');
             if (bedGroup) {
                 const scale = 500 / orbit.radius; 
-                const radarX = (target.x - panXBase) * scale;      // Table right -> CSS positive right
-                const radarY = -(target.y - panYBase) * scale;     // Table sup (y decreases) -> CSS negative up
+                const radarX = -screenRight * scale;      // Target right -> Table left -> CSS negative left
+                const radarY = screenUp * scale;          // Target down -> Table sup -> CSS negative up
                 bedGroup.style.transform = `translate3d(${radarX}px, ${radarY}px, 0px)`;
             }
         }
@@ -656,16 +765,24 @@
         addHoldListener('btn-ceph', () => { applyCameraUpdates(0, -orbitStep); }); addHoldListener('btn-caud', () => { applyCameraUpdates(0, orbitStep); });
         
         // PERFECTLY MAPPED CLINICAL PAN LOGIC (Screen & Radar Relative)
-        addHoldListener('btn-sup', () => { applyPanUpdates(0, panStep); });     // Table pushes Up, Anatomy drops Inf
-        addHoldListener('btn-inf', () => { applyPanUpdates(0, -panStep); });    // Table pushes Down, Anatomy rises Sup
-        addHoldListener('btn-left-pan', () => { applyPanUpdates(-panStep, 0); }); // Table pushes Left, Anatomy shifts Right
-        addHoldListener('btn-right-pan', () => { applyPanUpdates(panStep, 0); }); // Table pushes Right, Anatomy shifts Left
+        addHoldListener('btn-sup', () => { applyPanUpdates(0, -panStep); });       // Camera target down Y-axis, Table moves Sup
+        addHoldListener('btn-inf', () => { applyPanUpdates(0, panStep); });        // Camera target up Y-axis, Table moves Inf
+        addHoldListener('btn-left-pan', () => { applyPanUpdates(panStep, 0); });   // Camera target right X-axis, Table moves Left
+        addHoldListener('btn-right-pan', () => { applyPanUpdates(-panStep, 0); }); // Camera target left X-axis, Table moves Right
         
         addHoldListener('btn-mag-in', () => { applyPhysicalZoom(-radiusZoomStep); }); 
         addHoldListener('btn-mag-out', () => { applyPhysicalZoom(radiusZoomStep); }); 
 
         document.getElementById('btn-set-ap').addEventListener('click', () => { const orbit = viewer.getCameraOrbit(); apThetaBase = orbit.theta * (180 / Math.PI); apPhiBase = orbit.phi * (180 / Math.PI); updateDashboard(); });
-        document.getElementById('btn-set-center').addEventListener('click', () => { const target = viewer.getCameraTarget(); panXBase = target.x; panYBase = target.y; updateDashboard(); });
+        
+        // UPDATE CENTER LOGIC TO INCLUDE Z-AXIS
+        document.getElementById('btn-set-center').addEventListener('click', () => { 
+            const target = viewer.getCameraTarget(); 
+            panXBase = target.x; 
+            panYBase = target.y; 
+            panZBase = target.z; 
+            updateDashboard(); 
+        });
         document.getElementById('btn-set-zoom').addEventListener('click', () => { zoomBase = viewer.getCameraOrbit().radius; });
 
     </script>
