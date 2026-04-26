@@ -3,13 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Interventional Fluoroscopy Workstation</title>
+    <title>Virtual C-Arm Workstation</title>
     
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.4.0/model-viewer.min.js"></script>
 
     <style>
+        /* =========================================================
+           GLOBAL & VARIABLES
+           ========================================================= */
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Rajdhani:wght@500;600;700&display=swap');
+
         :root {
-            --bg-dark: #050608;
+            /* Intro Vars */
+            --cyan: #00e5ff;
+            --dark-bg: #010305;
+            
+            /* App Vars */
+            --bg-dark: #010305;
             --panel-bg: #11141c;
             --border-color: #2a2e39;
             --accent-blue: #00e5ff;
@@ -23,49 +34,219 @@
             --btn-active: #00e5ff;
         }
 
-        body {
-            margin: 0; padding: 0; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            background-color: var(--bg-dark); color: var(--text-main);
-            display: flex; height: 100vh; overflow: hidden; user-select: none; 
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
         }
 
-        .txt-mob { display: none; } /* Hidden on desktop */
+        body, html {
+            width: 100%;
+            height: 100%;
+            background-color: var(--dark-bg);
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            color: var(--text-main);
+            overflow: hidden;
+            user-select: none;
+        }
 
-        /* --- INTRO SPLASH SCREEN --- */
-        #intro-screen {
-            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-color: #050608; z-index: 9999;
-            display: flex; justify-content: center; align-items: center; overflow: hidden; transition: opacity 1s ease-in-out;
+        /* --- FULL SCREEN BUTTON --- */
+        #fullscreen-btn {
+            position: fixed;
+            top: 15px;
+            right: 15px;
+            z-index: 9999;
+            background: rgba(0, 0, 0, 0.5);
+            color: var(--cyan);
+            border: 1px solid var(--cyan);
+            border-radius: 6px;
+            width: 45px;
+            height: 45px;
+            font-size: 1.5rem;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(5px);
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 0 10px rgba(0, 229, 255, 0.1);
         }
-        #bg-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; opacity: 0.6; }
-        .intro-modal {
-            position: relative; z-index: 2; background: rgba(10, 11, 14, 0.7); backdrop-filter: blur(15px);
-            border: 1px solid rgba(0, 229, 255, 0.2); border-radius: 15px; padding: 60px; max-width: 600px;
-            text-align: center; box-shadow: 0 0 50px rgba(0, 229, 255, 0.1), inset 0 0 20px rgba(0,0,0,0.8);
-            transition: all 0.8s cubic-bezier(0.25, 1, 0.5, 1);
+        #fullscreen-btn:hover {
+            background: var(--cyan);
+            color: #000;
+            box-shadow: 0 0 20px var(--cyan);
+            transform: scale(1.1);
         }
-        .intro-modal.booting { transform: scale(2.5); opacity: 0; filter: blur(10px); }
-        .intro-logo {
-            width: 70px; height: 70px; background: var(--accent-blue); margin: 0 auto 20px auto; animation: pulse 2s infinite;
-            mask: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/></svg>') no-repeat center;
-            -webkit-mask: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/></svg>') no-repeat center;
-        }
-        @keyframes pulse {
-            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0, 229, 255, 0.7); }
-            70% { transform: scale(1); box-shadow: 0 0 0 15px rgba(0, 229, 255, 0); }
-            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0, 229, 255, 0); }
-        }
-        .intro-modal h1 { font-size: 32px; margin: 0 0 10px 0; color: #ffffff; letter-spacing: 3px; }
-        .intro-modal h2 { font-size: 14px; color: var(--accent-blue); margin: 0 0 30px 0; letter-spacing: 5px; }
-        .intro-modal p { color: var(--text-muted); font-size: 14px; line-height: 1.6; margin-bottom: 40px; }
-        .btn-start { background-color: rgba(0, 229, 255, 0.05); color: var(--accent-blue); border: 1px solid var(--accent-blue); padding: 15px 40px; font-size: 15px; font-weight: bold; letter-spacing: 3px; border-radius: 4px; cursor: pointer; transition: all 0.3s; width: 100%; height: 55px; }
-        .btn-start:hover { background-color: rgba(0, 229, 255, 0.2); box-shadow: 0 0 25px rgba(0, 229, 255, 0.4); }
 
-        /* --- MAIN WORKSPACE --- */
+
+        /* =========================================================
+           INTRO PAGE STYLES
+           ========================================================= */
+        #canvas-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 9000;
+            background-color: var(--dark-bg); 
+        }
+
+        #ui-layer {
+            position: fixed;
+            z-index: 9010; 
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: flex-start;
+            align-items: flex-end;       
+            padding: 60px 80px;          
+            pointer-events: none;
+            font-family: 'Rajdhani', sans-serif;
+        }
+
+        .text-content {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start; 
+            text-align: left;        
+            pointer-events: auto;
+            transition: opacity 0.8s ease, transform 0.8s ease;
+            max-width: 700px;
+        }
+
+        #ui-layer h1 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 3.5rem;
+            font-weight: 900;
+            letter-spacing: 4px;
+            line-height: 1.1;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            text-shadow: 0 0 20px rgba(0, 229, 255, 0.3);
+        }
+
+        #ui-layer h2 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.2rem;
+            color: var(--cyan);
+            letter-spacing: 6px;
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-bottom: 30px;
+            opacity: 0.9;
+        }
+
+        #ui-layer p {
+            font-size: 1.1rem;
+            color: #8a9ba8;
+            max-width: 550px;
+            line-height: 1.6;
+            margin-bottom: 50px;
+            letter-spacing: 1px;
+            font-weight: 500;
+        }
+
+        #initBtn {
+            background: transparent;
+            color: var(--cyan);
+            border: 1px solid var(--cyan);
+            padding: 18px 60px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1rem;
+            font-weight: 700;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 0 10px rgba(0, 229, 255, 0.1) inset;
+        }
+
+        #initBtn:hover {
+            background: var(--cyan);
+            color: #000;
+            box-shadow: 0 0 30px var(--cyan);
+            transform: scale(1.05);
+        }
+
+        #loading-stats {
+            position: fixed;
+            bottom: 5vh; 
+            left: 50%;
+            transform: translateX(-50%);
+            text-align: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 1s ease;
+            z-index: 9020;
+            width: 100%;
+        }
+
+        #percentage {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 5rem;
+            font-weight: 900;
+            text-shadow: 0 0 40px var(--cyan);
+            line-height: 1;
+        }
+
+        .loading-bar-container {
+            width: 400px;
+            height: 2px;
+            background: rgba(255, 255, 255, 0.1);
+            margin: 15px auto;
+        }
+
+        #loading-bar-fill {
+            width: 0%;
+            height: 100%;
+            background: var(--cyan);
+            box-shadow: 0 0 10px var(--cyan);
+            transition: width 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .status-text {
+            letter-spacing: 8px; 
+            font-weight: 700; 
+            color: var(--cyan);
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            animation: blink 1.5s infinite;
+        }
+        
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+
+        #whiteout {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #fff;
+            z-index: 9999;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        /* =========================================================
+           MAIN APP STYLES
+           ========================================================= */
+        .txt-mob { display: none; } 
+
+        #main-app-container {
+            display: flex; 
+            width: 100%;
+            height: 100dvh; /* Uses dynamic viewport height */
+            flex-direction: row;
+        }
+
         #monitor-area { flex: 2; display: flex; flex-direction: column; padding: 20px; box-sizing: border-box; background: radial-gradient(circle at center, #151820 0%, #050608 100%); position: relative;}
         .monitor-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; font-weight: 600; letter-spacing: 1px; color: var(--text-muted); }
         .screen-bezel { flex-grow: 1; border: 2px solid #333; border-radius: 12px; overflow: hidden; box-shadow: 0 0 30px rgba(0, 0, 0, 0.8), inset 0 0 50px rgba(0,0,0,0.1); position: relative; display: flex; flex-direction: column; }
         
-        /* --- UPPER SCREEN: 3D ISOMETRIC C-ARM VISUALIZER --- */
         .visualizer-pane {
             height: 35%; background: #0d1117; border-bottom: 2px solid #222;
             display: flex; justify-content: center; align-items: center; position: relative; perspective: 1200px; overflow: hidden;
@@ -73,7 +254,6 @@
         .vis-label { position: absolute; top: 10px; left: 15px; font-size: 10px; color: #666; letter-spacing: 2px; z-index: 10; }
         .vis-scene { width: 200px; height: 200px; transform-style: preserve-3d; transform: rotateX(60deg) rotateZ(-45deg); }
         
-        /* Grouped Patient and Table to move together */
         .vis-bed-group { position: absolute; left: 0; top: 0; width: 100%; height: 100%; transform-style: preserve-3d; transition: transform 0.1s linear;}
         .vis-table { width: 80px; height: 280px; background: rgba(30,35,45,0.8); border: 1px solid #444; border-radius: 5px; position: absolute; left: 60px; top: -40px; transform: translateZ(-20px); }
         .vis-patient { width: 44px; height: 200px; background: #5a6270; border-radius: 10px; position: absolute; left: 78px; top: 0px; transform: translateZ(5px); box-shadow: inset 0 0 10px #000; }
@@ -105,7 +285,6 @@
         .beam-x { transform: rotateX(90deg); } .beam-y { transform: rotateX(90deg) rotateY(90deg); } 
         .beam-svg { width: 100%; height: 100%; display: block; overflow: visible; }
 
-        /* --- LOWER SCREEN: COLLIMATED FLUOROSCOPY OUTPUT --- */
         .fluoro-pane { 
             height: 65%; background-color: #000;
             position: relative; display: flex; justify-content: center; align-items: center; 
@@ -119,7 +298,6 @@
             position: relative; display: flex; justify-content: center; align-items: center;
         }
 
-        /* Loading Overlay & Particle System */
         #loading-overlay {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background: #000; color: var(--accent-blue);
@@ -157,7 +335,6 @@
             position: absolute; --poster-color: transparent; 
         }
 
-        /* --- CONTROL CONSOLE --- */
         #console-area { flex: 1; min-width: 380px; background-color: var(--panel-bg); border-left: 1px solid var(--border-color); padding: 25px; display: flex; flex-direction: column; gap: 15px; overflow-y: auto; box-shadow: -10px 0 20px rgba(0,0,0,0.5); }
         .console-title { font-size: 18px; font-weight: 700; color: var(--text-main); text-transform: uppercase; letter-spacing: 2px; margin: 0; padding-bottom: 5px; border-bottom: 1px solid var(--border-color); }
         
@@ -187,6 +364,8 @@
         .dash-value { font-family: 'Courier New', Courier, monospace; font-size: 18px; font-weight: bold; color: var(--accent-blue); text-shadow: 0 0 5px rgba(0, 229, 255, 0.3); }
         .dash-value.green { color: var(--accent-green); text-shadow: 0 0 5px rgba(0, 255, 136, 0.3); }
         
+        .tools-grid { display: block; } /* Grouping container for responsive layout */
+
         .control-group { background: #0a0c11; border: 1px solid #1a1e26; padding: 12px; border-radius: 8px; }
         .control-group h3 { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin: 0 0 10px 0; text-align: center; }
         
@@ -194,9 +373,9 @@
         .d-pad-container { display: flex; justify-content: center; }
         .d-pad { display: grid; grid-template-columns: 45px 45px 45px; grid-template-rows: 45px 45px 45px; gap: 6px; }
         
-        button { background-color: var(--btn-bg); color: var(--text-main); border: 1px solid var(--border-color); border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 11px; transition: all 0.1s ease; }
-        button:hover { background-color: var(--btn-hover); border-color: #4a5265; }
-        button:active { background-color: var(--accent-blue); color: #000; transform: scale(0.95); }
+        .control-btn { background-color: var(--btn-bg); color: var(--text-main); border: 1px solid var(--border-color); border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 11px; transition: all 0.1s ease; }
+        .control-btn:hover { background-color: var(--btn-hover); border-color: #4a5265; }
+        .control-btn:active { background-color: var(--accent-blue); color: #000; transform: scale(0.95); }
         
         .btn-wide { width: 100%; height: 32px; background-color: #1a1e29; }
         .btn-cal { border-color: var(--accent-warning); color: var(--accent-warning); }
@@ -210,235 +389,228 @@
         .zoom-controls { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
         .zoom-controls button { height: 45px; font-size: 16px; background-color: #0d2a33; border-color: var(--accent-blue); color: var(--accent-blue); font-weight: bold;}
 
-        /* --- RESPONSIVE DESIGN (TABLET & MOBILE) --- */
+        /* =========================================================
+           RESPONSIVE DESIGN (Highly Optimized for "No-Scroll" Mobile)
+           ========================================================= */
         @media (max-width: 900px) {
-            body {
-                flex-direction: column;
-                height: 100dvh; /* Mobile viewport height fix */
-                overflow-y: auto;
-            }
+            /* Intro Compression */
+            #ui-layer { padding: 40px 20px; justify-content: center; align-items: center; }
+            .text-content { align-items: center; text-align: center; }
+            #ui-layer h1 { font-size: 2.2rem; }
+            #ui-layer h2 { font-size: 0.9rem; margin-bottom: 20px; }
+            #ui-layer p { font-size: 0.95rem; margin-bottom: 30px; }
+            #initBtn { padding: 15px 40px; }
+            #percentage { font-size: 3.5rem; }
+            .loading-bar-container { width: 80%; }
+
+            /* App Compression to fit 100dvh exactly */
+            #main-app-container { flex-direction: column; height: 100dvh; overflow: hidden; }
             
-            #intro-modal { padding: 30px 20px; width: 85%; }
-            .intro-modal h1 { font-size: 24px; }
-            .intro-modal p { font-size: 13px; }
+            /* Give screen area strictly 38% height */
+            #monitor-area { flex: 0 0 38%; padding: 5px; min-height: 0; }
+            .monitor-header { margin-bottom: 5px; font-size: 10px; }
+            .screen-bezel { flex-direction: row; }
+            .visualizer-pane { width: 35%; border-bottom: none; border-right: 2px solid #222; }
+            .fluoro-pane { width: 65%; --cm: min(1.8vh, 1.8vw); }
+            .vis-scene { transform: scale(0.40) rotateX(60deg) rotateZ(-45deg); }
+            .vis-label { font-size: 8px; top: 5px; left: 5px; }
 
-            .txt-desk { display: none; }
-            .txt-mob { display: inline; }
-            .arrow-mob { font-size: 18px; font-weight: bold; }
-
-            #monitor-area {
-                flex: none;
-                height: 42vh; 
-                min-height: 250px;
-                padding: 10px;
-            }
-
-            /* --- Swap Radar to Left, Screen to Right --- */
-            .screen-bezel {
-                flex-direction: row; 
-            }
-            .visualizer-pane {
-                height: 100%;
-                width: 35%; /* Radar takes up left portion */
-                min-width: 140px;
-                border-bottom: none;
-                border-right: 2px solid #222;
-            }
-            .fluoro-pane {
-                height: 100%;
-                width: 65%; /* Screen takes up right portion */
-                --cm: min(2.2vh, 2vw);
-            }
-            .vis-scene {
-                /* Scale the 3D Radar down so it fits in the narrower left pane */
-                transform: scale(0.55) rotateX(60deg) rotateZ(-45deg); 
-            }
-            .vis-label {
-                font-size: 8px; top: 5px; left: 5px;
-            }
-
-            #console-area {
-                flex: none;
-                width: 100%;
-                min-width: 0;
-                border-left: none;
-                border-top: 2px solid var(--border-color);
-                padding: 12px;
-                height: auto; 
-                overflow: visible;
-                box-sizing: border-box;
-                gap: 10px;
-            }
-
-            /* --- Smaller Mobile Buttons --- */
-            button { font-size: 10px; padding: 5px; }
-            .btn-wide { height: 34px; font-size: 11px; }
-            .btn-settings { height: 34px; font-size: 10px; }
+            /* Give controls the remaining space and squash all margins */
+            #console-area { flex: 1; padding: 5px; gap: 5px; border-left: none; border-top: 2px solid var(--border-color); overflow-y: auto; }
             
-            .d-pad { 
-                grid-template-columns: 36px 36px 36px; 
-                grid-template-rows: 36px 36px 36px; 
-                gap: 5px;
-            }
-            .zoom-controls button { height: 38px; }
+            /* Hide the decorative title on mobile to save vertical height */
+            .console-title { display: none; }
 
-            /* Text sizing */
-            .dash-value { font-size: 15px; }
-            .dash-label { font-size: 9px; }
-            .console-title { font-size: 16px; }
+            .ui-row { gap: 5px; }
+            .dataset-selector label { display: none; } /* Hide label to save space */
+            .dataset-selector select { padding: 6px; font-size: 10px; }
+            .btn-settings { height: 30px; font-size: 9px; padding: 0 10px; }
 
-            .phys-grid { grid-template-columns: 1fr; gap: 8px; }
-            .phys-input-group input { font-size: 14px; padding: 8px; }
-            .btn-phys-apply { height: 36px; font-size: 12px; }
+            .digital-dashboard { padding: 5px; gap: 5px; border-radius: 4px; }
+            .dash-label { font-size: 8px; margin-bottom: 2px; }
+            .dash-value { font-size: 13px; }
 
-            /* Clean up Orientation Button specific for mobile */
-            #btn-ii-shape .txt-mob { font-size: 11px; font-weight: bold; }
+            /* Pack the Detector and Zoom side by side! */
+            .tools-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
+            .tools-grid .control-group { margin-top: 0 !important; }
+            
+            .control-group { padding: 5px; }
+            .control-group h3 { font-size: 8px; margin: 0 0 5px 0; }
+            #btn-ii-shape { height: 28px; font-size: 9px; }
+            .zoom-controls { margin-top: 0; gap: 5px; }
+            .zoom-controls button { height: 28px; font-size: 14px; }
+
+            .manipulation-grid { gap: 5px; }
+            .d-pad { grid-template-columns: 35px 35px 35px; grid-template-rows: 35px 35px 35px; gap: 4px; }
+            .control-btn { font-size: 9px; padding: 0; }
+
+            /* Overlay panel sizing */
+            .calibration-panel { max-height: 40vh; overflow-y: auto; padding: 10px; }
+            .phys-input-group input { padding: 4px; font-size: 11px; }
+            .btn-phys-apply { height: 28px; font-size: 10px; margin-top: 5px; }
+            #btn-ii-shape .txt-mob { font-size: 10px; font-weight: bold; }
         }
     </style>
 </head>
 <body>
 
-    <div id="intro-screen">
-        <canvas id="bg-canvas"></canvas>
-        <div class="intro-modal" id="intro-modal">
-            <div class="intro-logo"></div>
-            <h1>Virtual C-Arm Workstation</h1>
-            <h2>Fluoroscopy & Angiography Simulator</h2>
-            <p>Module features volumetric rendering, true collimation modes, and a raw rendering physics engine.</p>
-            <button class="btn-start" id="btn-init">INITIALIZE SYSTEM</button>
+    <button id="fullscreen-btn" title="Toggle Fullscreen">⛶</button>
+
+    <div id="canvas-container"></div>
+
+    <div id="ui-layer">
+        <div class="text-content" id="textContent">
+            <h1>Virtual C-Arm</h1>
+            <h2>Interventional Workstation</h2>
+            <p>High-fidelity simulation for C-arm positioning, fluoroscopic imaging, and interventional procedures.</p>
+            <button id="initBtn">Initialize System</button>
         </div>
     </div>
 
-    <div id="monitor-area">
-        <div class="monitor-header">
-            <span>LIVE FLUOROSCOPY FEED</span>
-            <span id="header-dataset-name">DATASET: PELVIS & LUMBAR SPINE</span>
+    <div id="loading-stats">
+        <div id="percentage">0%</div>
+        <div class="loading-bar-container">
+            <div id="loading-bar-fill"></div>
         </div>
-        <div class="screen-bezel">
-            
-            <div class="visualizer-pane">
-                <div class="vis-label">C-ARM ISOCENTER RADAR (ISO 45°)</div>
-                <div class="vis-scene">
-                    <div class="vis-bed-group" id="vis-bed-group">
-                        <div class="vis-table"></div>
-                        <div class="vis-patient"><div class="vis-head"></div></div>
-                    </div>
-                    <div class="vis-operator">YOU</div>
-                    
-                    <div class="c-arm-assembly" id="c-arm-graphic">
-                        <div class="c-arm-arc"></div>
-                        <div class="beam-x"><svg class="beam-svg" viewBox="0 0 60 160" preserveAspectRatio="none"><polygon points="30,0 60,160 0,160" fill="rgba(0,229,255,0.1)" stroke="#00e5ff" stroke-width="1.5" stroke-dasharray="4,2"/></svg></div>
-                        <div class="beam-y"><svg class="beam-svg" viewBox="0 0 60 160" preserveAspectRatio="none"><polygon points="30,0 60,160 0,160" fill="rgba(0,229,255,0.1)" stroke="#00e5ff" stroke-width="1.5" stroke-dasharray="4,2"/></svg></div>
-                        <div class="ii-detector" id="vis-detector"></div>
-                        <div class="xray-tube"></div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="fluoro-pane">
-                <div class="model-wrapper shape-crosswise" id="collimator">
-                    
-                    <div id="loading-overlay" class="active">
-                        <div class="spinner"></div>
-                        <div>RECEIVING VOLUMETRIC DATA...</div>
-                    </div>
-
-                    <model-viewer 
-                        id="c-arm-viewer"
-                        src="pelvis.glb"  
-                        alt="Medical Simulation Dataset" 
-                        environment-image="neutral"
-                        camera-orbit="0deg 90deg auto" 
-                        field-of-view="30deg"
-                        camera-target="0m 0m 0m"
-                        shadow-intensity="0"
-                        min-camera-orbit="auto auto 0.01m" 
-                        max-camera-orbit="auto auto 100m"
-                        auto-scale>
-                    </model-viewer>
-                </div>
-            </div>
-        </div>
+        <div class="status-text" id="status-label">INITIALIZING CORE</div>
     </div>
 
-    <div id="console-area">
-        <h1 class="console-title">C-Arm Interface</h1>
+    <div id="whiteout"></div>
 
-        <div class="ui-row">
-            <div class="dataset-selector">
-                <label for="model-select">Active Dataset</label>
-                <select id="model-select">
-                    <option value="pelvis.glb">Pelvis & Lumbar Spine</option>
-                    <option value="skeleton.glb">Full Body Skeleton</option>
-                    <option value="heart.glb">Cardiac Angiography</option>
-                </select>
+    <div id="main-app-container">
+        <div id="monitor-area">
+            <div class="monitor-header">
+                <span>LIVE FLUOROSCOPY FEED</span>
+                <span id="header-dataset-name">DATASET: PELVIS & LUMBAR SPINE</span>
             </div>
-            <button class="btn-settings" id="btn-toggle-cal">⚙️ SETTINGS</button>
-        </div>
+            <div class="screen-bezel">
+                
+                <div class="visualizer-pane">
+                    <div class="vis-label">C-ARM ISOCENTER RADAR (ISO 45°)</div>
+                    <div class="vis-scene">
+                        <div class="vis-bed-group" id="vis-bed-group">
+                            <div class="vis-table"></div>
+                            <div class="vis-patient"><div class="vis-head"></div></div>
+                        </div>
+                        <div class="vis-operator">YOU</div>
+                        
+                        <div class="c-arm-assembly" id="c-arm-graphic">
+                            <div class="c-arm-arc"></div>
+                            <div class="beam-x"><svg class="beam-svg" viewBox="0 0 60 160" preserveAspectRatio="none"><polygon points="30,0 60,160 0,160" fill="rgba(0,229,255,0.1)" stroke="#00e5ff" stroke-width="1.5" stroke-dasharray="4,2"/></svg></div>
+                            <div class="beam-y"><svg class="beam-svg" viewBox="0 0 60 160" preserveAspectRatio="none"><polygon points="30,0 60,160 0,160" fill="rgba(0,229,255,0.1)" stroke="#00e5ff" stroke-width="1.5" stroke-dasharray="4,2"/></svg></div>
+                            <div class="ii-detector" id="vis-detector"></div>
+                            <div class="xray-tube"></div>
+                        </div>
+                    </div>
+                </div>
 
-        <div class="calibration-panel" id="calibration-panel">
-            <div class="cal-title">Position Calibration</div>
-            <button class="btn-wide btn-cal" id="btn-set-ap">1. SET AP VIEW BASELINE</button>
-            <button class="btn-wide btn-cal" id="btn-set-center">2. SET TABLE ISOCENTER</button>
-            <button class="btn-wide btn-cal" id="btn-set-zoom">3. SET OPTIMAL SID BASELINE</button>
-            
-            <div class="cal-title" style="margin-top: 10px;">Raw Projection Physics (SID/OID)</div>
-            <div class="phys-grid">
-                <div class="phys-input-group"><label>Target X (Pan)</label><input type="number" id="in-tx" step="0.01"></div>
-                <div class="phys-input-group"><label>Target Y (Pan)</label><input type="number" id="in-ty" step="0.01"></div>
-                <div class="phys-input-group"><label>Target Z (Depth)</label><input type="number" id="in-tz" step="0.01"></div>
-                <div class="phys-input-group"><label>Orbit Rad (SID)</label><input type="number" id="in-rad" step="0.01"></div>
-                <div class="phys-input-group"><label>Orbit Theta(LAO)</label><input type="number" id="in-th" step="1"></div>
-                <div class="phys-input-group"><label>Orbit Phi (CEPH)</label><input type="number" id="in-phi" step="1"></div>
-                <div class="phys-input-group" style="grid-column: span 2;"><label>Lens Field of View (FOV)</label><input type="number" id="in-fov" step="1"></div>
-            </div>
-            <button class="btn-phys-apply" id="btn-phys-apply">APPLY PHYSICS OVERRIDE</button>
-        </div>
+                <div class="fluoro-pane">
+                    <div class="model-wrapper shape-crosswise" id="collimator">
+                        
+                        <div id="loading-overlay" class="active">
+                            <div class="spinner"></div>
+                            <div>RECEIVING VOLUMETRIC DATA...</div>
+                        </div>
 
-        <div class="digital-dashboard">
-            <div class="dash-item"><span class="dash-label">Gantry Oblique</span><span class="dash-value" id="val-oblique">0° AP</span></div>
-            <div class="dash-item"><span class="dash-label">Gantry Tilt</span><span class="dash-value" id="val-tilt">0°</span></div>
-            <div class="dash-item"><span class="dash-label">Table Iso X</span><span class="dash-value green" id="val-x">0.0</span></div>
-            <div class="dash-item"><span class="dash-label">Table Iso Y</span><span class="dash-value green" id="val-y">0.0</span></div>
-        </div>
-
-        <div class="control-group" style="margin-top: 5px;">
-            <h3>Detector Orientation</h3>
-            <button class="btn-wide" id="btn-ii-shape" style="background-color: #0d2a33; border-color: var(--accent-blue); color: var(--accent-blue); height: 40px; font-weight: bold; font-size: 14px; letter-spacing: 1px;">
-                <span class="txt-desk">II: CROSSWISE (29x26)</span>
-                <span class="txt-mob">CROSSWISE</span>
-            </button>
-        </div>
-
-        <div class="control-group">
-            <h3>Focal Distance (SID Magnification)</h3>
-            <div class="zoom-controls">
-                <button id="btn-mag-in">-</button>
-                <button id="btn-mag-out">+</button>
+                        <model-viewer 
+                            id="c-arm-viewer"
+                            src="pelvis.glb"  
+                            alt="Medical Simulation Dataset" 
+                            environment-image="neutral"
+                            camera-orbit="0deg 90deg auto" 
+                            field-of-view="30deg"
+                            camera-target="0m 0m 0m"
+                            shadow-intensity="0"
+                            min-camera-orbit="auto auto 0.01m" 
+                            max-camera-orbit="auto auto 100m"
+                            auto-scale>
+                        </model-viewer>
+                    </div>
+                </div>
             </div>
         </div>
 
-        <div class="manipulation-grid">
-            <div class="control-group">
-                <h3>Gantry (Tube)</h3>
-                <div class="d-pad-container">
-                    <div class="d-pad">
-                        <button class="btn-top" id="btn-ceph"><span class="txt-desk">CEPH</span><span class="txt-mob arrow-mob">↑</span></button>
-                        <button class="btn-left" id="btn-lao"><span class="txt-desk">LAO</span><span class="txt-mob arrow-mob">←</span></button>
-                        <button class="btn-right" id="btn-rao"><span class="txt-desk">RAO</span><span class="txt-mob arrow-mob">→</span></button>
-                        <button class="btn-bottom" id="btn-caud"><span class="txt-desk">CAUD</span><span class="txt-mob arrow-mob">↓</span></button>
+        <div id="console-area">
+            <h1 class="console-title">C-Arm Interface</h1>
+
+            <div class="ui-row">
+                <div class="dataset-selector">
+                    <label for="model-select">Active Dataset</label>
+                    <select id="model-select">
+                        <option value="pelvis.glb">Pelvis & Lumbar Spine</option>
+                        <option value="skeleton.glb">Full Body Skeleton</option>
+                        <option value="" disabled>Cardiac Angiography (Coming Soon)</option>
+                    </select>
+                </div>
+                <button class="btn-settings control-btn" id="btn-toggle-cal">⚙️ SETTINGS</button>
+            </div>
+
+            <div class="calibration-panel" id="calibration-panel">
+                <div class="cal-title">Position Calibration</div>
+                <button class="btn-wide btn-cal control-btn" id="btn-set-ap">1. SET AP VIEW BASELINE</button>
+                <button class="btn-wide btn-cal control-btn" id="btn-set-center">2. SET TABLE ISOCENTER</button>
+                <button class="btn-wide btn-cal control-btn" id="btn-set-zoom">3. SET OPTIMAL SID BASELINE</button>
+                
+                <div class="cal-title" style="margin-top: 10px;">Raw Projection Physics (SID/OID)</div>
+                <div class="phys-grid">
+                    <div class="phys-input-group"><label>Target X (Pan)</label><input type="number" id="in-tx" step="0.01"></div>
+                    <div class="phys-input-group"><label>Target Y (Pan)</label><input type="number" id="in-ty" step="0.01"></div>
+                    <div class="phys-input-group"><label>Target Z (Depth)</label><input type="number" id="in-tz" step="0.01"></div>
+                    <div class="phys-input-group"><label>Orbit Rad (SID)</label><input type="number" id="in-rad" step="0.01"></div>
+                    <div class="phys-input-group"><label>Orbit Theta(LAO)</label><input type="number" id="in-th" step="1"></div>
+                    <div class="phys-input-group"><label>Orbit Phi (CEPH)</label><input type="number" id="in-phi" step="1"></div>
+                    <div class="phys-input-group" style="grid-column: span 2;"><label>Lens Field of View (FOV)</label><input type="number" id="in-fov" step="1"></div>
+                </div>
+                <button class="btn-phys-apply control-btn" id="btn-phys-apply">APPLY PHYSICS OVERRIDE</button>
+            </div>
+
+            <div class="digital-dashboard">
+                <div class="dash-item"><span class="dash-label">Gantry Oblique</span><span class="dash-value" id="val-oblique">0° AP</span></div>
+                <div class="dash-item"><span class="dash-label">Gantry Tilt</span><span class="dash-value" id="val-tilt">0°</span></div>
+                <div class="dash-item"><span class="dash-label">Table Iso X</span><span class="dash-value green" id="val-x">0.0</span></div>
+                <div class="dash-item"><span class="dash-label">Table Iso Y</span><span class="dash-value green" id="val-y">0.0</span></div>
+            </div>
+
+            <div class="tools-grid">
+                <div class="control-group" style="margin-top: 5px;">
+                    <h3>Detector Orientation</h3>
+                    <button class="btn-wide control-btn" id="btn-ii-shape" style="background-color: #0d2a33; border-color: var(--accent-blue); color: var(--accent-blue); height: 40px; font-weight: bold; font-size: 14px; letter-spacing: 1px;">
+                        <span class="txt-desk">II: CROSSWISE (29x26)</span>
+                        <span class="txt-mob">CROSSWISE</span>
+                    </button>
+                </div>
+
+                <div class="control-group">
+                    <h3>Focal Distance (SID Magnification)</h3>
+                    <div class="zoom-controls">
+                        <button class="control-btn" id="btn-mag-in">-</button>
+                        <button class="control-btn" id="btn-mag-out">+</button>
                     </div>
                 </div>
             </div>
 
-            <div class="control-group">
-                <h3>Table (Pan)</h3>
-                <div class="d-pad-container">
-                    <div class="d-pad">
-                        <button class="btn-top" id="btn-sup">SUP</button>
-                        <button class="btn-left" id="btn-left-pan">L</button>
-                        <button class="btn-right" id="btn-right-pan">R</button>
-                        <button class="btn-bottom" id="btn-inf">INF</button>
+            <div class="manipulation-grid">
+                <div class="control-group">
+                    <h3>Gantry (Tube)</h3>
+                    <div class="d-pad-container">
+                        <div class="d-pad">
+                            <button class="btn-top control-btn" id="btn-ceph"><span class="txt-desk">CEPH</span><span class="txt-mob arrow-mob">↑</span></button>
+                            <button class="btn-left control-btn" id="btn-lao"><span class="txt-desk">LAO</span><span class="txt-mob arrow-mob">←</span></button>
+                            <button class="btn-right control-btn" id="btn-rao"><span class="txt-desk">RAO</span><span class="txt-mob arrow-mob">→</span></button>
+                            <button class="btn-bottom control-btn" id="btn-caud"><span class="txt-desk">CAUD</span><span class="txt-mob arrow-mob">↓</span></button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <h3>Table (Pan)</h3>
+                    <div class="d-pad-container">
+                        <div class="d-pad">
+                            <button class="btn-top control-btn" id="btn-sup">SUP</button>
+                            <button class="btn-left control-btn" id="btn-left-pan">L</button>
+                            <button class="btn-right control-btn" id="btn-right-pan">R</button>
+                            <button class="btn-bottom control-btn" id="btn-inf">INF</button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -446,60 +618,388 @@
     </div>
 
     <script>
-        // --- 1. CANVAS BACKGROUND ---
-        const canvas = document.getElementById('bg-canvas');
-        const ctx = canvas.getContext('2d');
-        let particlesArray = []; let canvasActive = true; 
-        canvas.width = window.innerWidth; canvas.height = window.innerHeight;
-        let mouse = { x: null, y: null, radius: 150 };
-        window.addEventListener('mousemove', function(event) { mouse.x = event.x; mouse.y = event.y; });
-        class Particle {
-            constructor(x, y, directionX, directionY, size, color) { this.x = x; this.y = y; this.directionX = directionX; this.directionY = directionY; this.size = size; this.color = color; }
-            draw() { ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2, false); ctx.fillStyle = '#00e5ff'; ctx.fill(); }
-            update() {
-                if (this.x > canvas.width || this.x < 0) this.directionX = -this.directionX;
-                if (this.y > canvas.height || this.y < 0) this.directionY = -this.directionY;
-                let dx = mouse.x - this.x; let dy = mouse.y - this.y; let distance = Math.sqrt(dx*dx + dy*dy);
-                if (distance < mouse.radius + this.size) {
-                    if (mouse.x < this.x && this.x < canvas.width - this.size * 10) this.x += 2;
-                    if (mouse.x > this.x && this.x > this.size * 10) this.x -= 2;
-                    if (mouse.y < this.y && this.y < canvas.height - this.size * 10) this.y += 2;
-                    if (mouse.y > this.y && this.y > this.size * 10) this.y -= 2;
-                }
-                this.x += this.directionX; this.y += this.directionY; this.draw();
-            }
-        }
-        function initCanvas() {
-            particlesArray = []; let numberOfParticles = (canvas.height * canvas.width) / 9000;
-            for (let i = 0; i < numberOfParticles; i++) {
-                let size = (Math.random() * 2) + 1;
-                let x = (Math.random() * ((canvas.width - size * 2) - (size * 2)) + size * 2);
-                let y = (Math.random() * ((canvas.height - size * 2) - (size * 2)) + size * 2);
-                particlesArray.push(new Particle(x, y, (Math.random() * 1) - 0.5, (Math.random() * 1) - 0.5, size, '#00e5ff'));
-            }
-        }
-        function animateCanvas() {
-            if (!canvasActive) return; requestAnimationFrame(animateCanvas);
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            for (let i = 0; i < particlesArray.length; i++) { particlesArray[i].update(); }
-            for (let a = 0; a < particlesArray.length; a++) {
-                for (let b = a; b < particlesArray.length; b++) {
-                    let distance = ((particlesArray[a].x - particlesArray[b].x) * (particlesArray[a].x - particlesArray[b].x)) + ((particlesArray[a].y - particlesArray[b].y) * (particlesArray[a].y - particlesArray[b].y));
-                    if (distance < (canvas.width / 7) * (canvas.height / 7)) {
-                        ctx.strokeStyle = `rgba(0, 229, 255, ${1 - (distance / 20000)})`; ctx.lineWidth = 1; ctx.beginPath();
-                        ctx.moveTo(particlesArray[a].x, particlesArray[a].y); ctx.lineTo(particlesArray[b].x, particlesArray[b].y); ctx.stroke();
-                    }
+        // --- 0. FULLSCREEN LOGIC ---
+        const fullscreenBtn = document.getElementById('fullscreen-btn');
+        fullscreenBtn.addEventListener('click', () => {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch((err) => {
+                    console.warn(`Error attempting to enable full-screen mode: ${err.message}`);
+                });
+                fullscreenBtn.innerHTML = '🗗'; 
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                    fullscreenBtn.innerHTML = '⛶';
                 }
             }
-        }
-        initCanvas(); animateCanvas();
-        document.getElementById('btn-init').addEventListener('click', function() {
-            this.innerText = "BOOTING SYSTEMS..."; this.style.backgroundColor = "#00e5ff"; this.style.color = "#000";
-            setTimeout(() => { document.getElementById('intro-modal').classList.add('booting'); document.getElementById('intro-screen').style.opacity = '0'; }, 300);
-            setTimeout(() => { document.getElementById('intro-screen').style.display = 'none'; canvasActive = false; }, 1300); 
         });
 
-        // --- 2. COLLIMATOR SHAPE LOGIC ---
+
+        // --- 1. INTRO SCENE & LOADING SETUP ---
+        const container = document.getElementById('canvas-container');
+        const scene = new THREE.Scene();
+        scene.fog = new THREE.FogExp2(0x010305, 0.015);
+
+        const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(0, 0, 22);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        container.appendChild(renderer.domElement);
+
+        const mainGroup = new THREE.Group();
+        mainGroup.scale.set(1.5, 1.5, 1.5); 
+        const baseY = 3.5;
+        const baseX = 6.0;
+        mainGroup.position.set(baseX, baseY, -4); 
+        scene.add(mainGroup);
+
+        const cyanColor = new THREE.Color(0x00e5ff);
+
+        const starGeo = new THREE.BufferGeometry();
+        const starCount = 1200; 
+        const starPos = new Float32Array(starCount * 3);
+        const starSizes = new Float32Array(starCount);
+
+        for(let i=0; i<starCount; i++) {
+            starPos[i*3] = (Math.random() - 0.5) * 180;
+            starPos[i*3+1] = (Math.random() - 0.5) * 180;
+            starPos[i*3+2] = (Math.random() - 0.5) * 100 - 15; 
+            starSizes[i] = Math.random() * 2.0;
+        }
+        starGeo.setAttribute('position', new THREE.BufferAttribute(starPos, 3));
+        starGeo.setAttribute('size', new THREE.BufferAttribute(starSizes, 1));
+        
+        const starMat = new THREE.PointsMaterial({ 
+            color: cyanColor, size: 0.12, transparent: true, opacity: 0.5, sizeAttenuation: true 
+        });
+        const stars = new THREE.Points(starGeo, starMat);
+        scene.add(stars);
+
+        const volumeShader = new THREE.ShaderMaterial({
+            uniforms: { 
+                color: { value: cyanColor.clone() }, 
+                time: { value: 0 }, 
+                brightness: { value: 1.0 } 
+            },
+            vertexShader: `
+                varying vec3 vNormal; varying vec3 vViewPosition; varying vec3 vWorldPosition;
+                void main() {
+                    vec4 worldPosition = modelMatrix * vec4(position, 1.0);
+                    vWorldPosition = worldPosition.xyz;
+                    vec4 mvPosition = viewMatrix * worldPosition;
+                    vViewPosition = -mvPosition.xyz;
+                    vNormal = normalize(normalMatrix * normal);
+                    gl_Position = projectionMatrix * mvPosition;
+                }
+            `,
+            fragmentShader: `
+                uniform vec3 color; uniform float time; uniform float brightness;
+                varying vec3 vNormal; varying vec3 vViewPosition; varying vec3 vWorldPosition;
+                void main() {
+                    vec3 normal = normalize(vNormal); vec3 viewDir = normalize(vViewPosition);
+                    
+                    float fresnel = 1.0 - max(dot(viewDir, normal), 0.0);
+                    fresnel = pow(fresnel, 1.2); 
+                    
+                    float n1 = sin(vWorldPosition.x * 0.2 + time * 0.7);
+                    float n2 = cos(vWorldPosition.y * 0.25 - time * 0.5);
+                    float n3 = sin((vWorldPosition.x + vWorldPosition.y) * 0.15 + time * 1.1);
+                    float organicNoise = (n1 + n2 + n3) / 3.0; 
+                    float sweep = organicNoise * 0.3 + 0.7;
+
+                    vec3 baseColor = vec3(0.0, 0.05, 0.1);
+                    float pulse = 0.8 + 0.2 * sin(time * 2.0);
+                    vec3 edgeColor = color * pulse * sweep;
+                    
+                    vec3 finalColor = mix(baseColor, edgeColor, fresnel);
+                    
+                    finalColor += vec3(1.0) * (brightness - 1.0) * 0.1;
+                    
+                    float alpha = mix(0.1, 0.9 * sweep, fresnel);
+                    float finalAlpha = min(alpha * brightness, 1.0); 
+                    
+                    gl_FragColor = vec4(finalColor * brightness, finalAlpha);
+                }
+            `,
+            transparent: true, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, depthWrite: false
+        });
+
+        const particleShader = new THREE.ShaderMaterial({
+            uniforms: { 
+                color: { value: cyanColor.clone() }, 
+                brightness: { value: 1.0 } 
+            },
+            vertexShader: `
+                attribute float aSize; attribute float aOpacity; varying float vOpacity;
+                void main() {
+                    vOpacity = aOpacity;
+                    vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+                    gl_PointSize = aSize * (45.0 / -mvPosition.z); 
+                    gl_Position = projectionMatrix * mvPosition;
+                }
+            `,
+            fragmentShader: `
+                uniform vec3 color; uniform float brightness; varying float vOpacity;
+                void main() {
+                    vec2 xy = gl_PointCoord.xy - vec2(0.5); float ll = length(xy);
+                    if(ll > 0.5) discard;
+                    
+                    float alpha = (0.5 - ll) * 2.0 * vOpacity;
+                    vec3 finalColor = color + vec3(1.0) * (brightness - 1.0) * 0.1;
+                    
+                    gl_FragColor = vec4(finalColor * brightness, min(alpha * brightness, 1.0));
+                }
+            `,
+            transparent: true, blending: THREE.AdditiveBlending, depthWrite: false
+        });
+
+        const iconGroup = new THREE.Group();
+        iconGroup.rotation.z = -Math.PI / 5; 
+        mainGroup.add(iconGroup);
+
+        const edgeLineMat = new THREE.LineBasicMaterial({ color: 0xffffff, linewidth: 1, blending: THREE.AdditiveBlending, transparent: true, opacity: 0.9 });
+        
+        const shape = new THREE.Shape();
+        const innerR = 1.2, outerR = 5.0, angleSpan = Math.PI / 2.8;
+        shape.absarc(0, 0, innerR, -angleSpan/2, angleSpan/2, false);
+        shape.lineTo(Math.cos(angleSpan/2) * outerR, Math.sin(angleSpan/2) * outerR);
+        shape.absarc(0, 0, outerR, angleSpan/2, -angleSpan/2, true);
+        shape.lineTo(Math.cos(-angleSpan/2) * innerR, Math.sin(-angleSpan/2) * innerR);
+
+        const extrudeSettings = { depth: 1.2, bevelEnabled: true, bevelSegments: 2, steps: 1, bevelSize: 0.05, bevelThickness: 0.05 };
+        const bladeGeo = new THREE.ExtrudeGeometry(shape, extrudeSettings);
+        bladeGeo.translate(0, 0, -0.6); 
+        const edgesGeo = new THREE.EdgesGeometry(bladeGeo);
+
+        for(let i = 0; i < 3; i++) {
+            const bladeGroup = new THREE.Group();
+            bladeGroup.add(new THREE.Mesh(bladeGeo, volumeShader));
+            bladeGroup.add(new THREE.LineSegments(edgesGeo, edgeLineMat));
+            bladeGroup.rotation.z = i * (Math.PI * 2 / 3) + Math.PI/2;
+            iconGroup.add(bladeGroup);
+        }
+
+        const coreGeo = new THREE.CylinderGeometry(0.8, 0.8, 1.8, 32);
+        coreGeo.rotateX(Math.PI / 2); 
+        iconGroup.add(new THREE.Mesh(coreGeo, volumeShader));
+        iconGroup.add(new THREE.LineSegments(new THREE.EdgesGeometry(coreGeo), edgeLineMat));
+
+        const pCount = 10000;
+        const pGeo = new THREE.BufferGeometry();
+        const pPos = new Float32Array(pCount * 3), pSize = new Float32Array(pCount), pOpacity = new Float32Array(pCount);
+        const pTheta = new Float32Array(pCount), pY = new Float32Array(pCount), pBaseR = new Float32Array(pCount), pSpeed = new Float32Array(pCount); 
+
+        for(let i = 0; i < pCount; i++) {
+            pTheta[i] = Math.random() * Math.PI * 2;
+            pY[i] = (Math.random() - 0.5) * 18.0; 
+            pBaseR[i] = 6.0 + (Math.random() * 2.5); 
+            pSize[i] = Math.random() * 2.5 + 0.5;      
+            pOpacity[i] = Math.random() * 0.8 + 0.2;   
+            pSpeed[i] = Math.random() * 1.5 + 0.5;    
+        }
+
+        pGeo.setAttribute('position', new THREE.BufferAttribute(pPos, 3));
+        pGeo.setAttribute('aSize', new THREE.BufferAttribute(pSize, 1));
+        pGeo.setAttribute('aOpacity', new THREE.BufferAttribute(pOpacity, 1));
+        const windParticles = new THREE.Points(pGeo, particleShader);
+        windParticles.rotation.x = Math.PI / 2; 
+        mainGroup.add(windParticles);
+
+        let phase = 'IDLE'; 
+        let windSpeedMult = 1.0;
+        
+        let targetParallaxX = 0, targetParallaxY = 0;
+        let currentParallaxX = 0, currentParallaxY = 0;
+
+        let targetLoadProgress = 0;
+        let currentLoadProgress = 0;
+
+        window.addEventListener('mousemove', (e) => {
+            if(phase === 'DONE') return; 
+            targetParallaxX = (e.clientX / window.innerWidth - 0.5) * 2;
+            targetParallaxY = (e.clientY / window.innerHeight - 0.5) * 2;
+        });
+
+        document.getElementById('initBtn').addEventListener('click', function() {
+            if (phase !== 'IDLE') return;
+            phase = 'LOADING';
+            
+            document.getElementById('textContent').style.opacity = '0';
+            document.getElementById('textContent').style.transform = 'translateY(20px) scale(0.95)';
+            document.getElementById('textContent').style.pointerEvents = 'none';
+            
+            setTimeout(() => {
+                document.getElementById('loading-stats').style.opacity = '1';
+                startNetworkLoading();
+            }, 800);
+        });
+
+        function startNetworkLoading() {
+            const bar = document.getElementById('loading-bar-fill');
+            const txt = document.getElementById('percentage');
+            const statusLabel = document.getElementById('status-label');
+            
+            function step() {
+                if (targetLoadProgress >= 100) {
+                    targetLoadProgress = 100;
+                    txt.innerText = '100%';
+                    bar.style.width = '100%';
+                    statusLabel.innerText = 'SYSTEM LAUNCHING';
+                    statusLabel.style.color = '#fff';
+                    statusLabel.style.animation = 'none';
+                    return;
+                }
+                
+                const jump = Math.random() > 0.8 ? Math.random() * 8 : Math.random() * 2;
+                targetLoadProgress = Math.min(100, targetLoadProgress + jump);
+                
+                bar.style.width = targetLoadProgress + '%';
+                txt.innerText = Math.floor(targetLoadProgress) + '%';
+                
+                if (targetLoadProgress < 25) {
+                    statusLabel.innerText = 'INITIALIZING CORE';
+                } else if (targetLoadProgress < 50) {
+                    statusLabel.innerText = 'CALIBRATING GEOMETRY';
+                } else if (targetLoadProgress < 75) {
+                    statusLabel.innerText = 'TUBE WARM UP';
+                } else {
+                    statusLabel.innerText = 'FINALIZING PROTOCOLS';
+                }
+                
+                const delay = Math.random() > 0.9 ? Math.random() * 500 : Math.random() * 80;
+                setTimeout(step, delay);
+            }
+            step();
+        }
+
+        const clock = new THREE.Clock();
+        function animate() {
+            requestAnimationFrame(animate);
+            if (phase === 'DONE') return; 
+
+            const delta = Math.min(clock.getDelta(), 0.1);
+            const time = clock.getElapsedTime();
+
+            if (phase === 'LOADING') {
+                currentLoadProgress += (targetLoadProgress - currentLoadProgress) * delta * 3.0;
+            }
+
+            if (targetLoadProgress === 100 && currentLoadProgress > 98 && phase !== 'DONE') {
+                phase = 'DONE';
+                
+                document.getElementById('whiteout').style.opacity = '1';
+
+                setTimeout(() => {
+                    document.getElementById('canvas-container').style.display = 'none';
+                    document.getElementById('loading-stats').style.display = 'none';
+                    document.getElementById('ui-layer').style.display = 'none';
+                    
+                    document.getElementById('whiteout').style.transition = 'opacity 1s ease-out';
+                    document.getElementById('whiteout').style.opacity = '0';
+                    setTimeout(() => {
+                        document.getElementById('whiteout').style.display = 'none';
+                    }, 1000);
+                }, 100);
+                return; 
+            }
+
+            let iconBrightness = 1.0;
+            let windBrightness = 1.0;
+
+            if (currentLoadProgress >= 80 && phase !== 'DONE') {
+                let t = Math.max(0, Math.min(1, (currentLoadProgress - 80) / 20.0));
+                let smoothT = t * t * (3.0 - 2.0 * t);
+
+                targetParallaxX = 0; targetParallaxY = 0;
+
+                mainGroup.position.x = THREE.MathUtils.lerp(baseX, 0, smoothT);
+                mainGroup.position.y = THREE.MathUtils.lerp(baseY, 0, smoothT);
+                mainGroup.position.z = THREE.MathUtils.lerp(-4, 25, smoothT); 
+
+                let scaleSize = 1.5 + (smoothT * 5.0);
+                mainGroup.scale.set(scaleSize, scaleSize, scaleSize);
+
+                windSpeedMult = 4.0 + (15.0 * smoothT);
+                iconGroup.rotation.z -= (0.3 + 8.0 * smoothT) * delta;
+
+                iconBrightness = 1.0 + (50.0 * smoothT);
+                windBrightness = 1.0 + (30.0 * smoothT);
+
+                let c = new THREE.Color().lerpColors(cyanColor, new THREE.Color(0xffffff), smoothT);
+                volumeShader.uniforms.color.value.copy(c);
+                particleShader.uniforms.color.value.copy(c);
+                edgeLineMat.color.copy(c);
+
+                if (t > 0.9) {
+                    document.getElementById('whiteout').style.opacity = (t - 0.9) * 10.0;
+                }
+            } else if (phase !== 'DONE') {
+                if(phase === 'LOADING') {
+                    windSpeedMult += (4.0 - windSpeedMult) * delta;
+                    windBrightness += (2.0 - windBrightness) * delta;
+                }
+
+                currentParallaxX += (targetParallaxX - currentParallaxX) * 0.05;
+                currentParallaxY += (targetParallaxY - currentParallaxY) * 0.05;
+
+                mainGroup.rotation.y = (currentParallaxX * 0.15);
+                mainGroup.rotation.x = (currentParallaxY * 0.15);
+                mainGroup.position.x = baseX + (currentParallaxX * 1.5);
+                mainGroup.position.y = baseY - (currentParallaxY * 1.5);
+                mainGroup.position.z = -4;
+
+                iconGroup.rotation.z -= 0.3 * delta; 
+            }
+
+            if (phase !== 'DONE') {
+                volumeShader.uniforms.brightness.value = iconBrightness;
+                particleShader.uniforms.brightness.value = windBrightness;
+                volumeShader.uniforms.time.value = time;
+
+                stars.position.x = currentParallaxX * -15.0;
+                stars.position.y = currentParallaxY * 15.0;
+                stars.rotation.z = time * 0.015;
+
+                const positions = pGeo.attributes.position.array;
+                for(let i = 0; i < pCount; i++) {
+                    const baseTheta = pTheta[i];
+                    const r0 = pBaseR[i];
+                    const speed = pSpeed[i] * windSpeedMult;
+                    
+                    let currentY = pY[i] + (time * speed);
+                    currentY = ((currentY + 9) % 18) - 9; 
+
+                    const verticalWave = Math.cos(currentY * 0.3 - time * 1.0);
+                    const radialWave = Math.sin(baseTheta * 2.0 + time * 0.8);
+                    
+                    const radiusMod = r0 + (verticalWave * radialWave * 1.5);
+                    const twist = currentY * 0.08 * Math.sin(time * 0.3);
+                    const finalTheta = baseTheta + (time * 0.4) + twist; 
+
+                    positions[i*3] = Math.cos(finalTheta) * radiusMod;
+                    positions[i*3+1] = currentY; 
+                    positions[i*3+2] = Math.sin(finalTheta) * radiusMod;
+                }
+                pGeo.attributes.position.needsUpdate = true;
+
+                renderer.render(scene, camera);
+            }
+        }
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        animate();
+
+        // =========================================================
+        // MAIN APPLICATION LOGIC 
+        // =========================================================
+        
         const collimator = document.getElementById('collimator');
         const visDetector = document.getElementById('vis-detector');
         const btnIiShape = document.getElementById('btn-ii-shape');
@@ -516,15 +1016,12 @@
             currentModeIndex = (currentModeIndex + 1) % iiModes.length;
             collimator.classList.add(iiModes[currentModeIndex].class);
             
-            // Re-inject both spans to maintain responsiveness without JS listener logic
             btnIiShape.innerHTML = `<span class="txt-desk">${iiModes[currentModeIndex].desk}</span><span class="txt-mob">${iiModes[currentModeIndex].mob}</span>`;
-            
             visDetector.style.width = iiModes[currentModeIndex].visW;
             visDetector.style.height = iiModes[currentModeIndex].visH;
             visDetector.style.borderRadius = iiModes[currentModeIndex].visRad;
         });
 
-        // --- 3. SETTINGS & PHYSICS PANEL ---
         const btnToggleCal = document.getElementById('btn-toggle-cal');
         const calibrationPanel = document.getElementById('calibration-panel');
         let isSettingsOpen = false;
@@ -543,23 +1040,30 @@
             } else {
                 calibrationPanel.classList.remove('open'); btnToggleCal.classList.remove('active');
                 clearInterval(physInterval);
-                const orbit = viewer.getCameraOrbit(); const target = viewer.getCameraTarget();
-                viewer.cameraOrbit = `${orbit.theta}rad ${orbit.phi}rad ${orbit.radius}m`;
-                viewer.cameraTarget = `${target.x}m ${target.y}m ${target.z}m`;
+                try {
+                    const orbit = viewer.getCameraOrbit(); const target = viewer.getCameraTarget();
+                    viewer.cameraOrbit = `${orbit.theta}rad ${orbit.phi}rad ${orbit.radius}m`;
+                    viewer.cameraTarget = `${target.x}m ${target.y}m ${target.z}m`;
+                } catch(e) {}
                 viewer.cameraControls = false; 
             }
         });
 
         function pullPhysicsData() {
-            if(document.activeElement.tagName === 'INPUT') return; 
-            const orbit = viewer.getCameraOrbit();
-            const target = viewer.getCameraTarget();
-            
-            inTx.value = target.x.toFixed(3); inTy.value = target.y.toFixed(3); inTz.value = target.z.toFixed(3);
-            inRad.value = orbit.radius.toFixed(3);
-            inTh.value = (orbit.theta * (180 / Math.PI)).toFixed(1);
-            inPhi.value = (orbit.phi * (180 / Math.PI)).toFixed(1);
-            inFov.value = viewer.getFieldOfView().toFixed(1);
+            try {
+                if(document.activeElement.tagName === 'INPUT') return; 
+                const orbit = viewer.getCameraOrbit();
+                const target = viewer.getCameraTarget();
+                if(!target || !orbit) return;
+                
+                inTx.value = target.x.toFixed(3); inTy.value = target.y.toFixed(3); inTz.value = target.z.toFixed(3);
+                inRad.value = orbit.radius.toFixed(3);
+                inTh.value = (orbit.theta * (180 / Math.PI)).toFixed(1);
+                inPhi.value = (orbit.phi * (180 / Math.PI)).toFixed(1);
+                inFov.value = viewer.getFieldOfView().toFixed(1);
+            } catch (error) {
+                // Failsafe catch
+            }
         }
 
         document.getElementById('btn-phys-apply').addEventListener('click', () => {
@@ -569,7 +1073,6 @@
             updateDashboard();
         });
 
-        // --- 4. PERSISTENT STORAGE & CORE LOGIC ---
         const viewer = document.getElementById('c-arm-viewer');
         const cArmGraphic = document.getElementById('c-arm-graphic');
         const modelSelect = document.getElementById('model-select');
@@ -577,7 +1080,6 @@
         
         let apThetaBase = 0; let apPhiBase = 90; let panXBase = 0; let panYBase = 0; let panZBase = 0; let zoomBase = null;
         
-        // HARDCODED STARTUP PRESETS 
         const modelPresets = {
             "pelvis.glb": { tx: -0.000, ty: 0.000, tz: 0.010, rad: 1.843, th: 88.7, phi: 90.6, fov: 30.0 },
             "skeleton.glb": { tx: 0.000, ty: 3.910, tz: -0.000, rad: 22.197, th: 0.0, phi: 90.0, fov: 14.7 },
@@ -625,7 +1127,8 @@
 
         modelSelect.addEventListener('change', (event) => {
             const newSrc = event.target.value;
-            
+            if(!newSrc) return; 
+
             viewer.src = ''; 
             loadingOverlay.classList.add('active');
             
@@ -667,86 +1170,82 @@
         viewer.addEventListener('camera-change', () => { updateDashboard(); });
 
         function updateDashboard() {
-            const orbit = viewer.getCameraOrbit(); const target = viewer.getCameraTarget();
-            const currentThetaDeg = orbit.theta * (180 / Math.PI); const currentPhiDeg = orbit.phi * (180 / Math.PI);
+            try {
+                const orbit = viewer.getCameraOrbit(); 
+                const target = viewer.getCameraTarget();
+                
+                if (!orbit || orbit.theta === undefined || !target || target.x === undefined) return; 
+                
+                const currentThetaDeg = orbit.theta * (180 / Math.PI); 
+                const currentPhiDeg = orbit.phi * (180 / Math.PI);
 
-            let relTheta = Math.round(currentThetaDeg - apThetaBase); let relPhi = Math.round(currentPhiDeg - apPhiBase);
-            relTheta = ((relTheta + 180) % 360) - 180; 
+                let relTheta = Math.round(currentThetaDeg - apThetaBase); let relPhi = Math.round(currentPhiDeg - apPhiBase);
+                relTheta = ((relTheta + 180) % 360) - 180; 
 
-            if (relTheta === 0) {
-                valOblique.innerText = '0° AP';
-            } else if (relTheta > 0 && relTheta < 90) {
-                valOblique.innerText = `${relTheta}° LAO`;
-            } else if (relTheta === 90) {
-                valOblique.innerText = `90° LEFT LATERAL`;
-            } else if (relTheta > 90) {
-                valOblique.innerText = `${relTheta}° LPO`;
-            } else if (relTheta < 0 && relTheta > -90) {
-                valOblique.innerText = `${Math.abs(relTheta)}° RAO`;
-            } else if (relTheta === -90) {
-                valOblique.innerText = `90° RIGHT LATERAL`;
-            } else if (relTheta < -90) {
-                valOblique.innerText = `${Math.abs(relTheta)}° RPO`;
-            }
+                if (relTheta === 0) valOblique.innerText = '0° AP';
+                else if (relTheta > 0 && relTheta < 90) valOblique.innerText = `${relTheta}° LAO`;
+                else if (relTheta === 90) valOblique.innerText = `90° LEFT LATERAL`;
+                else if (relTheta > 90) valOblique.innerText = `${relTheta}° LPO`;
+                else if (relTheta < 0 && relTheta > -90) valOblique.innerText = `${Math.abs(relTheta)}° RAO`;
+                else if (relTheta === -90) valOblique.innerText = `90° RIGHT LATERAL`;
+                else if (relTheta < -90) valOblique.innerText = `${Math.abs(relTheta)}° RPO`;
 
-            if (relPhi === 0) valTilt.innerText = '0°'; else if (relPhi < 0) valTilt.innerText = `${Math.abs(relPhi)}° CEPH`; else valTilt.innerText = `${relPhi}° CAUD`;
+                if (relPhi === 0) valTilt.innerText = '0°'; else if (relPhi < 0) valTilt.innerText = `${Math.abs(relPhi)}° CEPH`; else valTilt.innerText = `${relPhi}° CAUD`;
 
-            cArmGraphic.style.transform = `rotateY(${relTheta}deg) rotateX(${-relPhi}deg)`;
+                cArmGraphic.style.transform = `rotateY(${relTheta}deg) rotateX(${-relPhi}deg)`;
 
-            // --- RADAR PROJECTION MATH ---
-            // Convert AP baseline angles back to radians for projection
-            const t0 = apThetaBase * (Math.PI / 180);
-            const p0 = apPhiBase * (Math.PI / 180);
+                const t0 = apThetaBase * (Math.PI / 180);
+                const p0 = apPhiBase * (Math.PI / 180);
 
-            // Get target offset from the set isocenter (0,0) in world space
-            const dx = target.x - panXBase;
-            const dy = target.y - panYBase;
-            const dz = target.z - panZBase;
+                const dx = target.x - panXBase;
+                const dy = target.y - panYBase;
+                const dz = target.z - panZBase;
 
-            // Project world coordinates onto the AP view's horizontal and vertical planes
-            // This properly untangles X and Z regardless of how the 3D model was originally drawn
-            const screenRight = dx * Math.cos(t0) + dz * -Math.sin(t0);
-            const screenUp = dx * (-Math.cos(p0) * Math.sin(t0)) + dy * Math.sin(p0) + dz * (-Math.cos(p0) * Math.cos(t0));
+                const screenRight = dx * Math.cos(t0) + dz * -Math.sin(t0);
+                const screenUp = dx * (-Math.cos(p0) * Math.sin(t0)) + dy * Math.sin(p0) + dz * (-Math.cos(p0) * Math.cos(t0));
 
-            // Update digital dashboard with actual physical table coordinates
-            valX.innerText = (-screenRight).toFixed(2); 
-            valY.innerText = (-screenUp).toFixed(2);
+                valX.innerText = (-screenRight).toFixed(2); 
+                valY.innerText = (-screenUp).toFixed(2);
 
-            // Update Table & Patient position in 3D Radar
-            const bedGroup = document.getElementById('vis-bed-group');
-            if (bedGroup) {
-                const scale = 500 / orbit.radius; 
-                const radarX = -screenRight * scale;      // Target right -> Table left -> CSS negative left
-                const radarY = screenUp * scale;          // Target down -> Table sup -> CSS negative up
-                bedGroup.style.transform = `translate3d(${radarX}px, ${radarY}px, 0px)`;
-            }
+                const bedGroup = document.getElementById('vis-bed-group');
+                if (bedGroup) {
+                    const scale = 500 / orbit.radius; 
+                    const radarX = -screenRight * scale;      
+                    const radarY = screenUp * scale;          
+                    bedGroup.style.transform = `translate3d(${radarX}px, ${radarY}px, 0px)`;
+                }
+            } catch (err) {}
         }
 
-        function applyCameraUpdates(dTheta, dPhi) { const orbit = viewer.getCameraOrbit(); viewer.cameraOrbit = `${orbit.theta + (dTheta * Math.PI / 180)}rad ${orbit.phi + (dPhi * Math.PI / 180)}rad ${orbit.radius}m`; }
+        function applyCameraUpdates(dTheta, dPhi) { try{const orbit = viewer.getCameraOrbit(); viewer.cameraOrbit = `${orbit.theta + (dTheta * Math.PI / 180)}rad ${orbit.phi + (dPhi * Math.PI / 180)}rad ${orbit.radius}m`;}catch(e){} }
         
         function applyPanUpdates(dx, dy) { 
-            const orbit = viewer.getCameraOrbit(); 
-            const target = viewer.getCameraTarget(); 
-            
-            const distanceScale = orbit.radius * 0.002; 
-            const dxScaled = dx * distanceScale;
-            const dyScaled = dy * distanceScale;
-            
-            const t = orbit.theta; const p = orbit.phi;
-            const rightX = Math.cos(t); const rightY = 0; const rightZ = -Math.sin(t);
-            const upX = -Math.cos(p) * Math.sin(t); const upY = Math.sin(p); const upZ = -Math.cos(p) * Math.cos(t);
+            try{
+                const orbit = viewer.getCameraOrbit(); 
+                const target = viewer.getCameraTarget(); 
+                
+                const distanceScale = orbit.radius * 0.002; 
+                const dxScaled = dx * distanceScale;
+                const dyScaled = dy * distanceScale;
+                
+                const t = orbit.theta; const p = orbit.phi;
+                const rightX = Math.cos(t); const rightY = 0; const rightZ = -Math.sin(t);
+                const upX = -Math.cos(p) * Math.sin(t); const upY = Math.sin(p); const upZ = -Math.cos(p) * Math.cos(t);
 
-            const newX = target.x + (dxScaled * rightX) + (dyScaled * upX);
-            const newY = target.y + (dxScaled * rightY) + (dyScaled * upY);
-            const newZ = target.z + (dxScaled * rightZ) + (dyScaled * upZ);
+                const newX = target.x + (dxScaled * rightX) + (dyScaled * upX);
+                const newY = target.y + (dxScaled * rightY) + (dyScaled * upY);
+                const newZ = target.z + (dxScaled * rightZ) + (dyScaled * upZ);
 
-            viewer.cameraTarget = `${newX}m ${newY}m ${newZ}m`; 
+                viewer.cameraTarget = `${newX}m ${newY}m ${newZ}m`; 
+            }catch(e){}
         }
         
         function applyPhysicalZoom(dRadiusFactor) { 
-            const orbit = viewer.getCameraOrbit(); 
-            const zoomAmount = orbit.radius * dRadiusFactor;
-            viewer.cameraOrbit = `${orbit.theta}rad ${orbit.phi}rad ${Math.max(0.01, orbit.radius + zoomAmount)}m`; 
+            try{
+                const orbit = viewer.getCameraOrbit(); 
+                const zoomAmount = orbit.radius * dRadiusFactor;
+                viewer.cameraOrbit = `${orbit.theta}rad ${orbit.phi}rad ${Math.max(0.01, orbit.radius + zoomAmount)}m`; 
+            }catch(e){}
         }
 
         function addHoldListener(buttonId, actionFunction) {
@@ -764,26 +1263,26 @@
         addHoldListener('btn-rao', () => { applyCameraUpdates(-orbitStep, 0); }); addHoldListener('btn-lao', () => { applyCameraUpdates(orbitStep, 0); });
         addHoldListener('btn-ceph', () => { applyCameraUpdates(0, -orbitStep); }); addHoldListener('btn-caud', () => { applyCameraUpdates(0, orbitStep); });
         
-        // PERFECTLY MAPPED CLINICAL PAN LOGIC (Screen & Radar Relative)
-        addHoldListener('btn-sup', () => { applyPanUpdates(0, -panStep); });       // Camera target down Y-axis, Table moves Sup
-        addHoldListener('btn-inf', () => { applyPanUpdates(0, panStep); });        // Camera target up Y-axis, Table moves Inf
-        addHoldListener('btn-left-pan', () => { applyPanUpdates(panStep, 0); });   // Camera target right X-axis, Table moves Left
-        addHoldListener('btn-right-pan', () => { applyPanUpdates(-panStep, 0); }); // Camera target left X-axis, Table moves Right
+        addHoldListener('btn-sup', () => { applyPanUpdates(0, -panStep); });       
+        addHoldListener('btn-inf', () => { applyPanUpdates(0, panStep); });        
+        addHoldListener('btn-left-pan', () => { applyPanUpdates(panStep, 0); });   
+        addHoldListener('btn-right-pan', () => { applyPanUpdates(-panStep, 0); }); 
         
         addHoldListener('btn-mag-in', () => { applyPhysicalZoom(-radiusZoomStep); }); 
         addHoldListener('btn-mag-out', () => { applyPhysicalZoom(radiusZoomStep); }); 
 
-        document.getElementById('btn-set-ap').addEventListener('click', () => { const orbit = viewer.getCameraOrbit(); apThetaBase = orbit.theta * (180 / Math.PI); apPhiBase = orbit.phi * (180 / Math.PI); updateDashboard(); });
+        document.getElementById('btn-set-ap').addEventListener('click', () => { try{const orbit = viewer.getCameraOrbit(); apThetaBase = orbit.theta * (180 / Math.PI); apPhiBase = orbit.phi * (180 / Math.PI); updateDashboard();}catch(e){} });
         
-        // UPDATE CENTER LOGIC TO INCLUDE Z-AXIS
         document.getElementById('btn-set-center').addEventListener('click', () => { 
-            const target = viewer.getCameraTarget(); 
-            panXBase = target.x; 
-            panYBase = target.y; 
-            panZBase = target.z; 
-            updateDashboard(); 
+            try{
+                const target = viewer.getCameraTarget(); 
+                panXBase = target.x; 
+                panYBase = target.y; 
+                panZBase = target.z; 
+                updateDashboard(); 
+            }catch(e){}
         });
-        document.getElementById('btn-set-zoom').addEventListener('click', () => { zoomBase = viewer.getCameraOrbit().radius; });
+        document.getElementById('btn-set-zoom').addEventListener('click', () => { try{zoomBase = viewer.getCameraOrbit().radius;}catch(e){} });
 
     </script>
 </body>
