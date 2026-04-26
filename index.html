@@ -113,21 +113,13 @@
            ========================================================= */
         .txt-mob { display: none; } 
 
-        #main-app-container {
-            display: flex; 
-            width: 100%;
-            height: 100dvh; 
-            flex-direction: row;
-        }
+        #main-app-container { display: flex; width: 100%; height: 100dvh; flex-direction: row; }
 
         #monitor-area { flex: 2; display: flex; flex-direction: column; padding: 20px; box-sizing: border-box; background: radial-gradient(circle at center, #151820 0%, #050608 100%); position: relative;}
         .monitor-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; font-weight: 600; letter-spacing: 1px; color: var(--text-muted); }
         .screen-bezel { flex-grow: 1; border: 2px solid #333; border-radius: 12px; overflow: hidden; box-shadow: 0 0 30px rgba(0, 0, 0, 0.8), inset 0 0 50px rgba(0,0,0,0.1); position: relative; display: flex; flex-direction: column; }
         
-        .visualizer-pane {
-            height: 35%; background: #0d1117; border-bottom: 2px solid #222;
-            display: flex; justify-content: center; align-items: center; position: relative; perspective: 1200px; overflow: hidden;
-        }
+        .visualizer-pane { height: 35%; background: #0d1117; border-bottom: 2px solid #222; display: flex; justify-content: center; align-items: center; position: relative; perspective: 1200px; overflow: hidden; }
         .vis-label { position: absolute; top: 10px; left: 15px; font-size: 10px; color: #666; letter-spacing: 2px; z-index: 10; }
         .vis-scene { width: 200px; height: 200px; transform-style: preserve-3d; transform: rotateX(60deg) rotateZ(-45deg); }
         
@@ -136,84 +128,38 @@
         .vis-patient { width: 44px; height: 200px; background: #5a6270; border-radius: 10px; position: absolute; left: 78px; top: 0px; transform: translateZ(5px); box-shadow: inset 0 0 10px #000; }
         .vis-head { width: 36px; height: 36px; background: #6b7485; border-radius: 50%; position: absolute; top: -40px; left: 4px; box-shadow: inset 0 0 5px #000; }
         
-        .vis-operator {
-            width: 30px; height: 20px; background: var(--accent-warning); border-radius: 10px;
-            position: absolute; left: 85px; top: 220px; transform: translateZ(10px);
-            box-shadow: 0 0 15px rgba(255, 179, 0, 0.4); display: flex; justify-content: center; align-items: center;
-            color: #000; font-size: 9px; font-weight: bold; font-family: monospace;
-        }
+        .vis-operator { width: 30px; height: 20px; background: var(--accent-warning); border-radius: 10px; position: absolute; left: 85px; top: 220px; transform: translateZ(10px); box-shadow: 0 0 15px rgba(255, 179, 0, 0.4); display: flex; justify-content: center; align-items: center; color: #000; font-size: 9px; font-weight: bold; font-family: monospace; }
 
         .c-arm-assembly { width: 200px; height: 200px; position: absolute; left: 0; top: 0; transform-style: preserve-3d; transition: transform 0.1s linear; }
         .c-arm-arc { width: 160px; height: 160px; border-radius: 50%; border: 12px solid #2a2e39; position: absolute; left: 20px; top: 20px; transform: rotateX(90deg); box-shadow: inset 0 0 10px #000, 0 0 10px #000; }
         
-        .ii-detector {
-            width: 70px; height: 60px; 
-            background: rgba(0, 255, 136, 0.7); position: absolute; left: 50%; top: 50%;
-            transform: translate(-50%, -50%) translateZ(80px); border: 2px solid #00ff88; border-radius: 6px;
-            box-shadow: 0 0 25px rgba(0, 255, 136, 0.4); transform-style: preserve-3d; transition: all 0.3s;
-        }
-        .ii-detector::after {
-            content: ''; position: absolute; width: 100%; height: 100%; top: -2px; left: -2px;
-            border: 2px solid #00ff88; border-radius: inherit; transform: translateZ(-10px); background: rgba(0, 255, 136, 0.2);
-        }
+        .ii-detector { width: 70px; height: 60px; background: rgba(0, 255, 136, 0.7); position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%) translateZ(80px); border: 2px solid #00ff88; border-radius: 6px; box-shadow: 0 0 25px rgba(0, 255, 136, 0.4); transform-style: preserve-3d; transition: all 0.3s; }
+        .ii-detector::after { content: ''; position: absolute; width: 100%; height: 100%; top: -2px; left: -2px; border: 2px solid #00ff88; border-radius: inherit; transform: translateZ(-10px); background: rgba(0, 255, 136, 0.2); }
         .xray-tube { width: 20px; height: 20px; background: var(--accent-blue); position: absolute; left: 90px; top: 90px; transform: translateZ(-80px); border-radius: 50%; box-shadow: 0 0 25px var(--accent-blue); }
 
         .beam-x, .beam-y { width: 60px; height: 160px; position: absolute; left: 70px; top: 20px; transform-style: preserve-3d; }
         .beam-x { transform: rotateX(90deg); } .beam-y { transform: rotateX(90deg) rotateY(90deg); } 
         .beam-svg { width: 100%; height: 100%; display: block; overflow: visible; }
 
-        .fluoro-pane { 
-            height: 65%; background-color: #000;
-            position: relative; display: flex; justify-content: center; align-items: center; 
-            --cm: min(1.7vh, 1.7vw);
-        }
+        .fluoro-pane { height: 65%; background-color: #000; position: relative; display: flex; justify-content: center; align-items: center; --cm: min(1.7vh, 1.7vw); }
         
-        .model-wrapper {
-            background-color: #ffffff; 
-            box-shadow: 0 0 50px rgba(255,255,255,0.1);
-            overflow: hidden; transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1);
-            position: relative; display: flex; justify-content: center; align-items: center;
-        }
+        .model-wrapper { background-color: #ffffff; box-shadow: 0 0 50px rgba(255,255,255,0.1); overflow: hidden; transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1); position: relative; display: flex; justify-content: center; align-items: center; }
 
-        #loading-overlay {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: #000; color: var(--accent-blue);
-            display: flex; flex-direction: column; justify-content: center; align-items: center;
-            z-index: 50; opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
-            font-family: monospace; font-size: 12px; letter-spacing: 2px; text-align: center;
-        }
+        #loading-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #000; color: var(--accent-blue); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 50; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; font-family: monospace; font-size: 12px; letter-spacing: 2px; text-align: center; }
         #loading-overlay.active { opacity: 1; pointer-events: all; }
         
-        .spinner {
-            width: 40px; height: 40px; margin-bottom: 15px; border-radius: 50%;
-            border: 3px solid rgba(0, 229, 255, 0.1); border-top-color: var(--accent-blue);
-            animation: spin 1s cubic-bezier(0.5, 0.1, 0.5, 0.9) infinite;
-        }
+        .spinner { width: 40px; height: 40px; margin-bottom: 15px; border-radius: 50%; border: 3px solid rgba(0, 229, 255, 0.1); border-top-color: var(--accent-blue); animation: spin 1s cubic-bezier(0.5, 0.1, 0.5, 0.9) infinite; }
         @keyframes spin { 100% { transform: rotate(360deg); } }
 
-        .build-particle {
-            position: absolute; width: 4px; height: 4px; border-radius: 50%;
-            background: var(--accent-blue); box-shadow: 0 0 10px var(--accent-blue);
-            pointer-events: none; z-index: 100;
-        }
-        
+        .build-particle { position: absolute; width: 4px; height: 4px; border-radius: 50%; background: var(--accent-blue); box-shadow: 0 0 10px var(--accent-blue); pointer-events: none; z-index: 100; }
         .flash-effect { animation: materialize-flash 0.6s ease-out; }
-        @keyframes materialize-flash {
-            0% { box-shadow: inset 0 0 150px var(--accent-blue), 0 0 80px var(--accent-blue); filter: brightness(2) contrast(1.5); }
-            100% { box-shadow: inset 0 0 0px transparent, 0 0 0px transparent; filter: brightness(1) contrast(1); }
-        }
+        @keyframes materialize-flash { 0% { box-shadow: inset 0 0 150px var(--accent-blue), 0 0 80px var(--accent-blue); filter: brightness(2) contrast(1.5); } 100% { box-shadow: inset 0 0 0px transparent, 0 0 0px transparent; filter: brightness(1) contrast(1); } }
         
         .shape-crosswise { width: calc(29 * var(--cm)); height: calc(26 * var(--cm)); border-radius: 10px; }
         .shape-lengthwise { width: calc(26 * var(--cm)); height: calc(29 * var(--cm)); border-radius: 10px; }
         .shape-circle { width: calc(29 * var(--cm)); height: calc(29 * var(--cm)); border-radius: 50%; }
 
-        /* FIXED: Added top/left translate trick to ensure absolute centering inside wrapper */
-        model-viewer { 
-            width: calc(45 * var(--cm)); height: calc(45 * var(--cm)); 
-            position: absolute; 
-            top: 50%; left: 50%; transform: translate(-50%, -50%);
-            --poster-color: transparent; 
-        }
+        model-viewer { width: calc(45 * var(--cm)); height: calc(45 * var(--cm)); position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); --poster-color: transparent; }
 
         #console-area { flex: 1; min-width: 380px; background-color: var(--panel-bg); border-left: 1px solid var(--border-color); padding: 25px; display: flex; flex-direction: column; gap: 15px; overflow-y: auto; box-shadow: -10px 0 20px rgba(0,0,0,0.5); }
         .console-title { font-size: 18px; font-weight: 700; color: var(--text-main); text-transform: uppercase; letter-spacing: 2px; margin: 0; padding-bottom: 5px; border-bottom: 1px solid var(--border-color); }
@@ -270,10 +216,9 @@
         .zoom-controls button { height: 45px; font-size: 16px; background-color: #0d2a33; border-color: var(--accent-blue); color: var(--accent-blue); font-weight: bold;}
 
         /* =========================================================
-           RESPONSIVE DESIGN (Fixes Alignment, Overlap, & Centering)
+           RESPONSIVE DESIGN 
            ========================================================= */
         @media (max-width: 900px) {
-            /* Intro Compression */
             #ui-layer { padding: 40px 20px; justify-content: center; align-items: center; }
             .text-content { align-items: center; text-align: center; }
             #ui-layer h1 { font-size: 2.2rem; }
@@ -283,61 +228,22 @@
             #percentage { font-size: 3.5rem; }
             .loading-bar-container { width: 80%; }
             
-            /* Smaller Fullscreen button to avoid blocking screen */
-            #fullscreen-btn {
-                top: 8px; right: 8px;
-                width: 38px; height: 38px; font-size: 1.2rem;
-            }
+            #fullscreen-btn { top: 8px; right: 8px; width: 38px; height: 38px; font-size: 1.2rem; }
 
-            /* App Structure */
             #main-app-container { flex-direction: column; height: 100dvh; overflow: hidden; }
             
-            /* Monitor Area Size Control */
             #monitor-area { flex: none; height: 45vh; min-height: 280px; padding: 10px; }
-            
-            /* FIXED: Prevent Header text overlapping and dodge the fullscreen button */
-            .monitor-header { 
-                flex-direction: column; /* Stack the labels */
-                align-items: center; 
-                margin-bottom: 6px; 
-                font-size: 10px; 
-                gap: 4px;
-                padding-right: 40px; /* Room for Fullscreen button */
-                padding-left: 40px; /* Balance it out visually */
-                text-align: center;
-            }
+            .monitor-header { flex-direction: column; align-items: center; margin-bottom: 6px; font-size: 10px; gap: 4px; padding-right: 40px; padding-left: 40px; text-align: center; }
             .monitor-header span { width: 100%; text-align: center; }
             
-            /* FIXED: Stack Radar and Screen vertically on mobile so they perfectly center */
             .screen-bezel { flex-direction: column; }
-            
-            .visualizer-pane { 
-                width: 100%; 
-                height: 35%; /* Fixed ratio */
-                border-bottom: 2px solid #222; 
-                border-right: none; 
-            }
+            .visualizer-pane { width: 100%; height: 35%; border-bottom: 2px solid #222; border-right: none; }
             .vis-scene { transform: scale(0.40) rotateX(60deg) rotateZ(-45deg); transform-origin: center; }
             .vis-label { font-size: 8px; top: 5px; left: 8px; z-index: 10; }
 
-            .fluoro-pane { 
-                width: 100%; 
-                height: 65%; 
-                /* Scale slightly adjusted so height easily fits inside the stacked pane */
-                --cm: min(1vh, 2.5vw); 
-            }
+            .fluoro-pane { width: 100%; height: 65%; --cm: min(1vh, 2.5vw); }
 
-            /* Console Area - Scrollable Container */
-            #console-area { 
-                flex: 1; 
-                padding: 12px 12px 30px 12px; 
-                gap: 12px; 
-                border-left: none; 
-                border-top: 2px solid var(--border-color); 
-                overflow-y: auto; 
-                overflow-x: hidden; 
-            }
-            
+            #console-area { flex: 1; padding: 12px 12px 30px 12px; gap: 12px; border-left: none; border-top: 2px solid var(--border-color); overflow-y: auto; overflow-x: hidden; }
             .console-title { display: none; }
 
             .ui-row { gap: 8px; }
@@ -371,6 +277,8 @@
     </style>
 </head>
 <body>
+
+    <audio id="bg-music" src="intro.mp3" preload="auto" loop></audio>
 
     <button id="fullscreen-btn" title="Toggle Fullscreen">⛶</button>
 
@@ -536,43 +444,74 @@
     </div>
 
     <script>
-        // --- 0. SAFARI COMPATIBLE FULLSCREEN LOGIC ---
+        // --- 0. AUDIO ENGINE ---
+        const bgMusic = document.getElementById('bg-music');
+        const clickAudio = new Audio('click.mp3'); // References the file you uploaded
+
+        // Autoplay background music starting at 5 seconds
+        window.addEventListener('DOMContentLoaded', () => {
+            bgMusic.currentTime = 5.0; // Start at 5 seconds
+            bgMusic.volume = 0.5;
+            
+            // Attempt to autoplay immediately
+            let playPromise = bgMusic.play();
+            if (playPromise !== undefined) {
+                playPromise.catch(error => {
+                    // Browser blocked autoplay due to missing user interaction.
+                    // We attach a hidden listener to play it the moment they tap/click ANYWHERE on the screen.
+                    const unlockAudio = () => {
+                        bgMusic.play().catch(e => {});
+                        document.removeEventListener('click', unlockAudio);
+                        document.removeEventListener('touchstart', unlockAudio);
+                    };
+                    document.addEventListener('click', unlockAudio);
+                    document.addEventListener('touchstart', unlockAudio);
+                });
+            }
+        });
+
+        // Function to play the external click sound file
+        function playClickSound() {
+            // Cloning allows the sound to play rapidly over itself if buttons are spammed
+            let sound = clickAudio.cloneNode();
+            sound.volume = 0.6;
+            sound.play().catch(e => {});
+        }
+
+        // Attach the new sound effect to all buttons
+        document.querySelectorAll('.control-btn').forEach(btn => {
+            btn.addEventListener('mousedown', playClickSound);
+            btn.addEventListener('touchstart', playClickSound, {passive: true});
+        });
+        
+        // Also attach to the Init button specifically
+        document.getElementById('initBtn').addEventListener('mousedown', playClickSound);
+        document.getElementById('initBtn').addEventListener('touchstart', playClickSound, {passive: true});
+
+
+        // --- SAFARI COMPATIBLE FULLSCREEN LOGIC ---
         const fullscreenBtn = document.getElementById('fullscreen-btn');
         fullscreenBtn.addEventListener('click', () => {
             const elem = document.documentElement;
 
-            // Check if we are currently in fullscreen across all browser prefixes
             const isFullscreen = document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement;
-
             if (!isFullscreen) {
-                // Request Fullscreen (with Safari/iOS Fallbacks)
                 if (elem.requestFullscreen) {
-                    elem.requestFullscreen().catch(err => {
-                        alert("Fullscreen API blocked by this iOS device. To play in full screen, tap 'Share' and select 'Add to Home Screen'.");
-                    });
-                } else if (elem.webkitRequestFullscreen) { /* Safari */
-                    elem.webkitRequestFullscreen();
-                } else if (elem.msRequestFullscreen) { /* IE11 */
-                    elem.msRequestFullscreen();
-                } else {
-                    alert("Fullscreen is restricted by Apple on this device's browser. Tap 'Share' > 'Add to Home Screen' for a fullscreen app experience.");
-                }
+                    elem.requestFullscreen().catch(err => { alert("Fullscreen API blocked by this iOS device. To play in full screen, tap 'Share' and select 'Add to Home Screen'."); });
+                } else if (elem.webkitRequestFullscreen) { elem.webkitRequestFullscreen(); } 
+                else if (elem.msRequestFullscreen) { elem.msRequestFullscreen(); } 
+                else { alert("Fullscreen is restricted by Apple on this device's browser. Tap 'Share' > 'Add to Home Screen' for a fullscreen app experience."); }
                 fullscreenBtn.innerHTML = '🗗'; 
             } else {
-                // Exit Fullscreen
-                if (document.exitFullscreen) {
-                    document.exitFullscreen();
-                } else if (document.webkitExitFullscreen) { /* Safari */
-                    document.webkitExitFullscreen();
-                } else if (document.msExitFullscreen) { /* IE11 */
-                    document.msExitFullscreen();
-                }
+                if (document.exitFullscreen) { document.exitFullscreen(); } 
+                else if (document.webkitExitFullscreen) { document.webkitExitFullscreen(); } 
+                else if (document.msExitFullscreen) { document.msExitFullscreen(); }
                 fullscreenBtn.innerHTML = '⛶';
             }
         });
 
 
-        // --- 1. INTRO SCENE & LOADING SETUP ---
+        // --- INTRO SCENE & LOADING SETUP ---
         const container = document.getElementById('canvas-container');
         const scene = new THREE.Scene();
         scene.fog = new THREE.FogExp2(0x010305, 0.015);
@@ -608,18 +547,12 @@
         starGeo.setAttribute('position', new THREE.BufferAttribute(starPos, 3));
         starGeo.setAttribute('size', new THREE.BufferAttribute(starSizes, 1));
         
-        const starMat = new THREE.PointsMaterial({ 
-            color: cyanColor, size: 0.12, transparent: true, opacity: 0.5, sizeAttenuation: true 
-        });
+        const starMat = new THREE.PointsMaterial({ color: cyanColor, size: 0.12, transparent: true, opacity: 0.5, sizeAttenuation: true });
         const stars = new THREE.Points(starGeo, starMat);
         scene.add(stars);
 
         const volumeShader = new THREE.ShaderMaterial({
-            uniforms: { 
-                color: { value: cyanColor.clone() }, 
-                time: { value: 0 }, 
-                brightness: { value: 1.0 } 
-            },
+            uniforms: { color: { value: cyanColor.clone() }, time: { value: 0 }, brightness: { value: 1.0 } },
             vertexShader: `
                 varying vec3 vNormal; varying vec3 vViewPosition; varying vec3 vWorldPosition;
                 void main() {
@@ -636,27 +569,20 @@
                 varying vec3 vNormal; varying vec3 vViewPosition; varying vec3 vWorldPosition;
                 void main() {
                     vec3 normal = normalize(vNormal); vec3 viewDir = normalize(vViewPosition);
-                    
                     float fresnel = 1.0 - max(dot(viewDir, normal), 0.0);
                     fresnel = pow(fresnel, 1.2); 
-                    
                     float n1 = sin(vWorldPosition.x * 0.2 + time * 0.7);
                     float n2 = cos(vWorldPosition.y * 0.25 - time * 0.5);
                     float n3 = sin((vWorldPosition.x + vWorldPosition.y) * 0.15 + time * 1.1);
                     float organicNoise = (n1 + n2 + n3) / 3.0; 
                     float sweep = organicNoise * 0.3 + 0.7;
-
                     vec3 baseColor = vec3(0.0, 0.05, 0.1);
                     float pulse = 0.8 + 0.2 * sin(time * 2.0);
                     vec3 edgeColor = color * pulse * sweep;
-                    
                     vec3 finalColor = mix(baseColor, edgeColor, fresnel);
-                    
                     finalColor += vec3(1.0) * (brightness - 1.0) * 0.1;
-                    
                     float alpha = mix(0.1, 0.9 * sweep, fresnel);
                     float finalAlpha = min(alpha * brightness, 1.0); 
-                    
                     gl_FragColor = vec4(finalColor * brightness, finalAlpha);
                 }
             `,
@@ -664,10 +590,7 @@
         });
 
         const particleShader = new THREE.ShaderMaterial({
-            uniforms: { 
-                color: { value: cyanColor.clone() }, 
-                brightness: { value: 1.0 } 
-            },
+            uniforms: { color: { value: cyanColor.clone() }, brightness: { value: 1.0 } },
             vertexShader: `
                 attribute float aSize; attribute float aOpacity; varying float vOpacity;
                 void main() {
@@ -682,10 +605,8 @@
                 void main() {
                     vec2 xy = gl_PointCoord.xy - vec2(0.5); float ll = length(xy);
                     if(ll > 0.5) discard;
-                    
                     float alpha = (0.5 - ll) * 2.0 * vOpacity;
                     vec3 finalColor = color + vec3(1.0) * (brightness - 1.0) * 0.1;
-                    
                     gl_FragColor = vec4(finalColor * brightness, min(alpha * brightness, 1.0));
                 }
             `,
@@ -762,6 +683,9 @@
         document.getElementById('initBtn').addEventListener('click', function() {
             if (phase !== 'IDLE') return;
             phase = 'LOADING';
+
+            // Fallback play if the browser blocked the autoplay on load
+            bgMusic.play().catch(e => {});
             
             document.getElementById('textContent').style.opacity = '0';
             document.getElementById('textContent').style.transform = 'translateY(20px) scale(0.95)';
@@ -795,15 +719,10 @@
                 bar.style.width = targetLoadProgress + '%';
                 txt.innerText = Math.floor(targetLoadProgress) + '%';
                 
-                if (targetLoadProgress < 25) {
-                    statusLabel.innerText = 'INITIALIZING CORE';
-                } else if (targetLoadProgress < 50) {
-                    statusLabel.innerText = 'CALIBRATING GEOMETRY';
-                } else if (targetLoadProgress < 75) {
-                    statusLabel.innerText = 'TUBE WARM UP';
-                } else {
-                    statusLabel.innerText = 'FINALIZING PROTOCOLS';
-                }
+                if (targetLoadProgress < 25) { statusLabel.innerText = 'INITIALIZING CORE'; } 
+                else if (targetLoadProgress < 50) { statusLabel.innerText = 'CALIBRATING GEOMETRY'; } 
+                else if (targetLoadProgress < 75) { statusLabel.innerText = 'TUBE WARM UP'; } 
+                else { statusLabel.innerText = 'FINALIZING PROTOCOLS'; }
                 
                 const delay = Math.random() > 0.9 ? Math.random() * 500 : Math.random() * 80;
                 setTimeout(step, delay);
@@ -812,6 +731,7 @@
         }
 
         const clock = new THREE.Clock();
+
         function animate() {
             requestAnimationFrame(animate);
             if (phase === 'DONE') return; 
@@ -825,7 +745,6 @@
 
             if (targetLoadProgress === 100 && currentLoadProgress > 98 && phase !== 'DONE') {
                 phase = 'DONE';
-                
                 document.getElementById('whiteout').style.opacity = '1';
 
                 setTimeout(() => {
