@@ -207,9 +207,12 @@
         .shape-lengthwise { width: calc(26 * var(--cm)); height: calc(29 * var(--cm)); border-radius: 10px; }
         .shape-circle { width: calc(29 * var(--cm)); height: calc(29 * var(--cm)); border-radius: 50%; }
 
+        /* FIXED: Added top/left translate trick to ensure absolute centering inside wrapper */
         model-viewer { 
             width: calc(45 * var(--cm)); height: calc(45 * var(--cm)); 
-            position: absolute; --poster-color: transparent; 
+            position: absolute; 
+            top: 50%; left: 50%; transform: translate(-50%, -50%);
+            --poster-color: transparent; 
         }
 
         #console-area { flex: 1; min-width: 380px; background-color: var(--panel-bg); border-left: 1px solid var(--border-color); padding: 25px; display: flex; flex-direction: column; gap: 15px; overflow-y: auto; box-shadow: -10px 0 20px rgba(0,0,0,0.5); }
@@ -241,7 +244,7 @@
         .dash-value { font-family: 'Courier New', Courier, monospace; font-size: 18px; font-weight: bold; color: var(--accent-blue); text-shadow: 0 0 5px rgba(0, 229, 255, 0.3); }
         .dash-value.green { color: var(--accent-green); text-shadow: 0 0 5px rgba(0, 255, 136, 0.3); }
         
-        .tools-grid { display: block; } /* Grouping container for responsive layout */
+        .tools-grid { display: block; } 
 
         .control-group { background: #0a0c11; border: 1px solid #1a1e26; padding: 12px; border-radius: 8px; }
         .control-group h3 { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin: 0 0 10px 0; text-align: center; }
@@ -267,7 +270,7 @@
         .zoom-controls button { height: 45px; font-size: 16px; background-color: #0d2a33; border-color: var(--accent-blue); color: var(--accent-blue); font-weight: bold;}
 
         /* =========================================================
-           RESPONSIVE DESIGN (Refined for Mobile Readability & Flow)
+           RESPONSIVE DESIGN (Fixes Alignment, Overlap, & Centering)
            ========================================================= */
         @media (max-width: 900px) {
             /* Intro Compression */
@@ -279,25 +282,55 @@
             #initBtn { padding: 15px 40px; }
             #percentage { font-size: 3.5rem; }
             .loading-bar-container { width: 80%; }
+            
+            /* Smaller Fullscreen button to avoid blocking screen */
+            #fullscreen-btn {
+                top: 8px; right: 8px;
+                width: 38px; height: 38px; font-size: 1.2rem;
+            }
 
             /* App Structure */
             #main-app-container { flex-direction: column; height: 100dvh; overflow: hidden; }
             
-            /* Give screen area a fixed percentage height so it stays locked at top */
-            #monitor-area { flex: none; height: 38vh; min-height: 250px; padding: 10px; }
-            .monitor-header { margin-bottom: 6px; font-size: 11px; } /* Increased Text */
-            .screen-bezel { flex-direction: row; }
+            /* Monitor Area Size Control */
+            #monitor-area { flex: none; height: 45vh; min-height: 280px; padding: 10px; }
             
-            /* Shift balance to give X-ray more room */
-            .visualizer-pane { width: 35%; border-bottom: none; border-right: 2px solid #222; }
-            .fluoro-pane { width: 65%; --cm: min(1.9vh, 1.9vw); }
-            .vis-scene { transform: scale(0.40) rotateX(60deg) rotateZ(-45deg); }
-            .vis-label { font-size: 9px; top: 5px; left: 5px; } /* Increased Text */
+            /* FIXED: Prevent Header text overlapping and dodge the fullscreen button */
+            .monitor-header { 
+                flex-direction: column; /* Stack the labels */
+                align-items: center; 
+                margin-bottom: 6px; 
+                font-size: 10px; 
+                gap: 4px;
+                padding-right: 40px; /* Room for Fullscreen button */
+                padding-left: 40px; /* Balance it out visually */
+                text-align: center;
+            }
+            .monitor-header span { width: 100%; text-align: center; }
+            
+            /* FIXED: Stack Radar and Screen vertically on mobile so they perfectly center */
+            .screen-bezel { flex-direction: column; }
+            
+            .visualizer-pane { 
+                width: 100%; 
+                height: 35%; /* Fixed ratio */
+                border-bottom: 2px solid #222; 
+                border-right: none; 
+            }
+            .vis-scene { transform: scale(0.40) rotateX(60deg) rotateZ(-45deg); transform-origin: center; }
+            .vis-label { font-size: 8px; top: 5px; left: 8px; z-index: 10; }
 
-            /* Console Area - Allow scrolling vertically inside the bottom container */
+            .fluoro-pane { 
+                width: 100%; 
+                height: 65%; 
+                /* Scale slightly adjusted so height easily fits inside the stacked pane */
+                --cm: min(1vh, 2.5vw); 
+            }
+
+            /* Console Area - Scrollable Container */
             #console-area { 
                 flex: 1; 
-                padding: 12px 12px 30px 12px; /* Bottom padding so scrolling ends cleanly */
+                padding: 12px 12px 30px 12px; 
                 gap: 12px; 
                 border-left: none; 
                 border-top: 2px solid var(--border-color); 
@@ -309,31 +342,27 @@
 
             .ui-row { gap: 8px; }
             .dataset-selector label { display: none; } 
-            .dataset-selector select { padding: 8px; font-size: 13px; } /* Increased Text */
+            .dataset-selector select { padding: 8px; font-size: 13px; } 
             .btn-settings { height: 36px; font-size: 11px; padding: 0 12px; }
 
             .digital-dashboard { padding: 8px; gap: 8px; border-radius: 6px; }
-            .dash-label { font-size: 10px; margin-bottom: 3px; } /* Increased Text */
-            .dash-value { font-size: 16px; } /* Increased Text */
+            .dash-label { font-size: 10px; margin-bottom: 3px; } 
+            .dash-value { font-size: 16px; } 
 
-            /* Pack Detector and Zoom side by side! */
             .tools-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
             .tools-grid .control-group { margin-top: 0 !important; }
             
             .control-group { padding: 8px; }
             .control-group h3 { font-size: 11px; margin: 0 0 8px 0; }
             
-            #btn-ii-shape { height: 42px; font-size: 12px; } /* Taller Touch Target */
+            #btn-ii-shape { height: 42px; font-size: 12px; } 
             .zoom-controls { margin-top: 0; gap: 8px; }
-            .zoom-controls button { height: 42px; font-size: 20px; } /* Taller Touch Target */
+            .zoom-controls button { height: 42px; font-size: 20px; } 
 
             .manipulation-grid { gap: 10px; }
-            
-            /* MUCH larger D-Pad for thumbs */
             .d-pad { grid-template-columns: 45px 45px 45px; grid-template-rows: 45px 45px 45px; gap: 6px; }
             .control-btn { font-size: 11px; padding: 0; }
 
-            /* Overlay panel sizing */
             .calibration-panel { max-height: 40vh; overflow-y: auto; padding: 12px; }
             .phys-input-group input { padding: 6px; font-size: 12px; }
             .btn-phys-apply { height: 34px; font-size: 11px; margin-top: 8px; }
@@ -969,8 +998,7 @@
                 inTh.value = (orbit.theta * (180 / Math.PI)).toFixed(1);
                 inPhi.value = (orbit.phi * (180 / Math.PI)).toFixed(1);
                 inFov.value = viewer.getFieldOfView().toFixed(1);
-            } catch (error) {
-            }
+            } catch (error) {}
         }
 
         document.getElementById('btn-phys-apply').addEventListener('click', () => {
