@@ -48,7 +48,14 @@
             color: var(--text-main);
             overflow: hidden;
             user-select: none;
+            -webkit-tap-highlight-color: transparent;
         }
+
+        /* Custom Scrollbar for Console */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: var(--bg-dark); }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--accent-blue); }
 
         /* --- FULL SCREEN BUTTON --- */
         #fullscreen-btn {
@@ -82,154 +89,24 @@
         /* =========================================================
            INTRO PAGE STYLES
            ========================================================= */
-        #canvas-container {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 9000;
-            background-color: var(--dark-bg); 
-        }
-
-        #ui-layer {
-            position: fixed;
-            z-index: 9010; 
-            width: 100%;
-            height: 100%;
-            display: flex;
-            justify-content: flex-start;
-            align-items: flex-end;       
-            padding: 60px 80px;          
-            pointer-events: none;
-            font-family: 'Rajdhani', sans-serif;
-        }
-
-        .text-content {
-            display: flex;
-            flex-direction: column;
-            align-items: flex-start; 
-            text-align: left;        
-            pointer-events: auto;
-            transition: opacity 0.8s ease, transform 0.8s ease;
-            max-width: 700px;
-        }
-
-        #ui-layer h1 {
-            font-family: 'Orbitron', sans-serif;
-            font-size: 3.5rem;
-            font-weight: 900;
-            letter-spacing: 4px;
-            line-height: 1.1;
-            margin-bottom: 10px;
-            text-transform: uppercase;
-            text-shadow: 0 0 20px rgba(0, 229, 255, 0.3);
-        }
-
-        #ui-layer h2 {
-            font-family: 'Orbitron', sans-serif;
-            font-size: 1.2rem;
-            color: var(--cyan);
-            letter-spacing: 6px;
-            font-weight: 600;
-            text-transform: uppercase;
-            margin-bottom: 30px;
-            opacity: 0.9;
-        }
-
-        #ui-layer p {
-            font-size: 1.1rem;
-            color: #8a9ba8;
-            max-width: 550px;
-            line-height: 1.6;
-            margin-bottom: 50px;
-            letter-spacing: 1px;
-            font-weight: 500;
-        }
-
-        #initBtn {
-            background: transparent;
-            color: var(--cyan);
-            border: 1px solid var(--cyan);
-            padding: 18px 60px;
-            font-family: 'Orbitron', sans-serif;
-            font-size: 1rem;
-            font-weight: 700;
-            letter-spacing: 4px;
-            text-transform: uppercase;
-            cursor: pointer;
-            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            position: relative;
-            overflow: hidden;
-            box-shadow: 0 0 10px rgba(0, 229, 255, 0.1) inset;
-        }
-
-        #initBtn:hover {
-            background: var(--cyan);
-            color: #000;
-            box-shadow: 0 0 30px var(--cyan);
-            transform: scale(1.05);
-        }
-
-        #loading-stats {
-            position: fixed;
-            bottom: 5vh; 
-            left: 50%;
-            transform: translateX(-50%);
-            text-align: center;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 1s ease;
-            z-index: 9020;
-            width: 100%;
-        }
-
-        #percentage {
-            font-family: 'Orbitron', sans-serif;
-            font-size: 5rem;
-            font-weight: 900;
-            text-shadow: 0 0 40px var(--cyan);
-            line-height: 1;
-        }
-
-        .loading-bar-container {
-            width: 400px;
-            height: 2px;
-            background: rgba(255, 255, 255, 0.1);
-            margin: 15px auto;
-        }
-
-        #loading-bar-fill {
-            width: 0%;
-            height: 100%;
-            background: var(--cyan);
-            box-shadow: 0 0 10px var(--cyan);
-            transition: width 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-        }
+        #canvas-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 9000; background-color: var(--dark-bg); }
+        #ui-layer { position: fixed; z-index: 9010; width: 100%; height: 100%; display: flex; justify-content: flex-start; align-items: flex-end; padding: 60px 80px; pointer-events: none; font-family: 'Rajdhani', sans-serif; }
+        .text-content { display: flex; flex-direction: column; align-items: flex-start; text-align: left; pointer-events: auto; transition: opacity 0.8s ease, transform 0.8s ease; max-width: 700px; }
+        #ui-layer h1 { font-family: 'Orbitron', sans-serif; font-size: 3.5rem; font-weight: 900; letter-spacing: 4px; line-height: 1.1; margin-bottom: 10px; text-transform: uppercase; text-shadow: 0 0 20px rgba(0, 229, 255, 0.3); }
+        #ui-layer h2 { font-family: 'Orbitron', sans-serif; font-size: 1.2rem; color: var(--cyan); letter-spacing: 6px; font-weight: 600; text-transform: uppercase; margin-bottom: 30px; opacity: 0.9; }
+        #ui-layer p { font-size: 1.1rem; color: #8a9ba8; max-width: 550px; line-height: 1.6; margin-bottom: 50px; letter-spacing: 1px; font-weight: 500; }
         
-        .status-text {
-            letter-spacing: 8px; 
-            font-weight: 700; 
-            color: var(--cyan);
-            font-family: 'Orbitron', sans-serif;
-            font-size: 0.9rem;
-            text-transform: uppercase;
-            animation: blink 1.5s infinite;
-        }
-        
+        #initBtn { background: transparent; color: var(--cyan); border: 1px solid var(--cyan); padding: 18px 60px; font-family: 'Orbitron', sans-serif; font-size: 1rem; font-weight: 700; letter-spacing: 4px; text-transform: uppercase; cursor: pointer; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); position: relative; overflow: hidden; box-shadow: 0 0 10px rgba(0, 229, 255, 0.1) inset; }
+        #initBtn:hover { background: var(--cyan); color: #000; box-shadow: 0 0 30px var(--cyan); transform: scale(1.05); }
+
+        #loading-stats { position: fixed; bottom: 5vh; left: 50%; transform: translateX(-50%); text-align: center; opacity: 0; pointer-events: none; transition: opacity 1s ease; z-index: 9020; width: 100%; }
+        #percentage { font-family: 'Orbitron', sans-serif; font-size: 5rem; font-weight: 900; text-shadow: 0 0 40px var(--cyan); line-height: 1; }
+        .loading-bar-container { width: 400px; height: 2px; background: rgba(255, 255, 255, 0.1); margin: 15px auto; }
+        #loading-bar-fill { width: 0%; height: 100%; background: var(--cyan); box-shadow: 0 0 10px var(--cyan); transition: width 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
+        .status-text { letter-spacing: 8px; font-weight: 700; color: var(--cyan); font-family: 'Orbitron', sans-serif; font-size: 0.9rem; text-transform: uppercase; animation: blink 1.5s infinite; }
         @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        #whiteout { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: #fff; z-index: 9999; opacity: 0; pointer-events: none; }
 
-        #whiteout {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: #fff;
-            z-index: 9999;
-            opacity: 0;
-            pointer-events: none;
-        }
 
         /* =========================================================
            MAIN APP STYLES
@@ -239,7 +116,7 @@
         #main-app-container {
             display: flex; 
             width: 100%;
-            height: 100dvh; /* Uses dynamic viewport height */
+            height: 100dvh; 
             flex-direction: row;
         }
 
@@ -390,7 +267,7 @@
         .zoom-controls button { height: 45px; font-size: 16px; background-color: #0d2a33; border-color: var(--accent-blue); color: var(--accent-blue); font-weight: bold;}
 
         /* =========================================================
-           RESPONSIVE DESIGN (Highly Optimized for "No-Scroll" Mobile)
+           RESPONSIVE DESIGN (Refined for Mobile Readability & Flow)
            ========================================================= */
         @media (max-width: 900px) {
             /* Intro Compression */
@@ -403,52 +280,64 @@
             #percentage { font-size: 3.5rem; }
             .loading-bar-container { width: 80%; }
 
-            /* App Compression to fit 100dvh exactly */
+            /* App Structure */
             #main-app-container { flex-direction: column; height: 100dvh; overflow: hidden; }
             
-            /* Give screen area strictly 38% height */
-            #monitor-area { flex: 0 0 38%; padding: 5px; min-height: 0; }
-            .monitor-header { margin-bottom: 5px; font-size: 10px; }
+            /* Give screen area a fixed percentage height so it stays locked at top */
+            #monitor-area { flex: none; height: 38vh; min-height: 250px; padding: 10px; }
+            .monitor-header { margin-bottom: 6px; font-size: 11px; } /* Increased Text */
             .screen-bezel { flex-direction: row; }
-            .visualizer-pane { width: 35%; border-bottom: none; border-right: 2px solid #222; }
-            .fluoro-pane { width: 65%; --cm: min(1.8vh, 1.8vw); }
-            .vis-scene { transform: scale(0.40) rotateX(60deg) rotateZ(-45deg); }
-            .vis-label { font-size: 8px; top: 5px; left: 5px; }
-
-            /* Give controls the remaining space and squash all margins */
-            #console-area { flex: 1; padding: 5px; gap: 5px; border-left: none; border-top: 2px solid var(--border-color); overflow-y: auto; }
             
-            /* Hide the decorative title on mobile to save vertical height */
+            /* Shift balance to give X-ray more room */
+            .visualizer-pane { width: 35%; border-bottom: none; border-right: 2px solid #222; }
+            .fluoro-pane { width: 65%; --cm: min(1.9vh, 1.9vw); }
+            .vis-scene { transform: scale(0.40) rotateX(60deg) rotateZ(-45deg); }
+            .vis-label { font-size: 9px; top: 5px; left: 5px; } /* Increased Text */
+
+            /* Console Area - Allow scrolling vertically inside the bottom container */
+            #console-area { 
+                flex: 1; 
+                padding: 12px 12px 30px 12px; /* Bottom padding so scrolling ends cleanly */
+                gap: 12px; 
+                border-left: none; 
+                border-top: 2px solid var(--border-color); 
+                overflow-y: auto; 
+                overflow-x: hidden; 
+            }
+            
             .console-title { display: none; }
 
-            .ui-row { gap: 5px; }
-            .dataset-selector label { display: none; } /* Hide label to save space */
-            .dataset-selector select { padding: 6px; font-size: 10px; }
-            .btn-settings { height: 30px; font-size: 9px; padding: 0 10px; }
+            .ui-row { gap: 8px; }
+            .dataset-selector label { display: none; } 
+            .dataset-selector select { padding: 8px; font-size: 13px; } /* Increased Text */
+            .btn-settings { height: 36px; font-size: 11px; padding: 0 12px; }
 
-            .digital-dashboard { padding: 5px; gap: 5px; border-radius: 4px; }
-            .dash-label { font-size: 8px; margin-bottom: 2px; }
-            .dash-value { font-size: 13px; }
+            .digital-dashboard { padding: 8px; gap: 8px; border-radius: 6px; }
+            .dash-label { font-size: 10px; margin-bottom: 3px; } /* Increased Text */
+            .dash-value { font-size: 16px; } /* Increased Text */
 
-            /* Pack the Detector and Zoom side by side! */
-            .tools-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
+            /* Pack Detector and Zoom side by side! */
+            .tools-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
             .tools-grid .control-group { margin-top: 0 !important; }
             
-            .control-group { padding: 5px; }
-            .control-group h3 { font-size: 8px; margin: 0 0 5px 0; }
-            #btn-ii-shape { height: 28px; font-size: 9px; }
-            .zoom-controls { margin-top: 0; gap: 5px; }
-            .zoom-controls button { height: 28px; font-size: 14px; }
+            .control-group { padding: 8px; }
+            .control-group h3 { font-size: 11px; margin: 0 0 8px 0; }
+            
+            #btn-ii-shape { height: 42px; font-size: 12px; } /* Taller Touch Target */
+            .zoom-controls { margin-top: 0; gap: 8px; }
+            .zoom-controls button { height: 42px; font-size: 20px; } /* Taller Touch Target */
 
-            .manipulation-grid { gap: 5px; }
-            .d-pad { grid-template-columns: 35px 35px 35px; grid-template-rows: 35px 35px 35px; gap: 4px; }
-            .control-btn { font-size: 9px; padding: 0; }
+            .manipulation-grid { gap: 10px; }
+            
+            /* MUCH larger D-Pad for thumbs */
+            .d-pad { grid-template-columns: 45px 45px 45px; grid-template-rows: 45px 45px 45px; gap: 6px; }
+            .control-btn { font-size: 11px; padding: 0; }
 
             /* Overlay panel sizing */
-            .calibration-panel { max-height: 40vh; overflow-y: auto; padding: 10px; }
-            .phys-input-group input { padding: 4px; font-size: 11px; }
-            .btn-phys-apply { height: 28px; font-size: 10px; margin-top: 5px; }
-            #btn-ii-shape .txt-mob { font-size: 10px; font-weight: bold; }
+            .calibration-panel { max-height: 40vh; overflow-y: auto; padding: 12px; }
+            .phys-input-group input { padding: 6px; font-size: 12px; }
+            .btn-phys-apply { height: 34px; font-size: 11px; margin-top: 8px; }
+            #btn-ii-shape .txt-mob { font-size: 12px; font-weight: bold; }
         }
     </style>
 </head>
@@ -618,19 +507,38 @@
     </div>
 
     <script>
-        // --- 0. FULLSCREEN LOGIC ---
+        // --- 0. SAFARI COMPATIBLE FULLSCREEN LOGIC ---
         const fullscreenBtn = document.getElementById('fullscreen-btn');
         fullscreenBtn.addEventListener('click', () => {
-            if (!document.fullscreenElement) {
-                document.documentElement.requestFullscreen().catch((err) => {
-                    console.warn(`Error attempting to enable full-screen mode: ${err.message}`);
-                });
+            const elem = document.documentElement;
+
+            // Check if we are currently in fullscreen across all browser prefixes
+            const isFullscreen = document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement;
+
+            if (!isFullscreen) {
+                // Request Fullscreen (with Safari/iOS Fallbacks)
+                if (elem.requestFullscreen) {
+                    elem.requestFullscreen().catch(err => {
+                        alert("Fullscreen API blocked by this iOS device. To play in full screen, tap 'Share' and select 'Add to Home Screen'.");
+                    });
+                } else if (elem.webkitRequestFullscreen) { /* Safari */
+                    elem.webkitRequestFullscreen();
+                } else if (elem.msRequestFullscreen) { /* IE11 */
+                    elem.msRequestFullscreen();
+                } else {
+                    alert("Fullscreen is restricted by Apple on this device's browser. Tap 'Share' > 'Add to Home Screen' for a fullscreen app experience.");
+                }
                 fullscreenBtn.innerHTML = '🗗'; 
             } else {
+                // Exit Fullscreen
                 if (document.exitFullscreen) {
                     document.exitFullscreen();
-                    fullscreenBtn.innerHTML = '⛶';
+                } else if (document.webkitExitFullscreen) { /* Safari */
+                    document.webkitExitFullscreen();
+                } else if (document.msExitFullscreen) { /* IE11 */
+                    document.msExitFullscreen();
                 }
+                fullscreenBtn.innerHTML = '⛶';
             }
         });
 
@@ -1062,7 +970,6 @@
                 inPhi.value = (orbit.phi * (180 / Math.PI)).toFixed(1);
                 inFov.value = viewer.getFieldOfView().toFixed(1);
             } catch (error) {
-                // Failsafe catch
             }
         }
 
@@ -1153,9 +1060,7 @@
                         }
                     }
                 }
-            } catch (error) {
-                console.warn("Transparency effect skipped.", error);
-            }
+            } catch (error) {}
 
             loadPreset(modelSelect.value);
             updateDashboard();
