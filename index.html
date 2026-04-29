@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Virtual C-Arm Workstation</title>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -28,6 +28,11 @@
             font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             color: var(--text-main); overflow: hidden; user-select: none;
             -webkit-tap-highlight-color: transparent;
+        }
+
+        /* FIX 2: Prevent iOS native touch actions like double-tap zoom on interactables */
+        button, select, input, .joystick-wrapper {
+            touch-action: manipulation;
         }
 
         ::-webkit-scrollbar { width: 6px; }
@@ -220,7 +225,7 @@
         /* Flipped Icon Class */
         .flip-v { display: inline-block; transform: scaleY(-1); }
 
-        /* RESPONSIVE DESIGN */
+        /* RESPONSIVE DESIGN - FIX 3: Solved overflow logic for perfect fit */
         @media (max-width: 900px) {
             #ui-layer { padding: 40px 20px; justify-content: center; align-items: center; }
             .text-content { align-items: center; text-align: center; }
@@ -235,12 +240,12 @@
             #monitor-area { flex: none; height: 48vh; min-height: 280px; padding: 8px; }
             .monitor-header { margin-bottom: 4px; font-size: 10px; }
             
-            .screen-bezel { grid-template-columns: 140px 1fr; height: 100%; } 
+            .screen-bezel { grid-template-columns: 120px 1fr; height: 100%; } 
             .left-column { display: flex; flex-direction: column; border-right: 2px solid #222; }
             .visualizer-pane { height: 50%; border-bottom: 2px solid #222; }
             
             /* Massively Scaled up for mobile too, shifted down slightly */
-            .vis-scene { transform: scale(0.55) rotateX(60deg) rotateZ(-45deg); transform-origin: center; margin-top: 20px;}
+            .vis-scene { transform: scale(0.50) rotateX(60deg) rotateZ(-45deg); transform-origin: center; margin-top: 15px;}
             
             .digital-dashboard { height: 50%; padding: 4px; justify-content: space-evenly; }
             .dash-title { font-size: 10px; margin-bottom: 3px; padding-bottom: 2px;}
@@ -251,7 +256,18 @@
 
             #console-area { flex: 1; min-width: 100%; max-width: 100%; padding: 10px; gap: 8px; border-left: none; border-top: 2px solid var(--border-color); overflow-y: auto; }
             
-            .manipulation-grid { gap: 6px; }
+            /* Fixed Grid Fits for Mobile */
+            .control-group { padding: 6px; }
+            .manipulation-grid { gap: 4px; }
+            .tools-grid-compact { gap: 4px; }
+
+            /* Downscale joysticks slightly on mobile to ensure perfect row fit */
+            .joystick-wrapper.big { width: 70px; height: 70px; }
+            .joystick-wrapper.big .joy-knob { width: 28px; height: 28px; margin-top: -14px; margin-left: -14px; }
+            .joystick-wrapper.medium { width: 60px; height: 60px; }
+            .joystick-wrapper.medium .joy-knob { width: 24px; height: 24px; margin-top: -12px; margin-left: -12px;}
+            .joystick-wrapper.small { width: 50px; height: 50px; }
+            .joystick-wrapper.small .joy-knob { width: 20px; height: 20px; margin-top: -10px; margin-left: -10px;}
             
             #btn-ii-shape .txt-mob { display: inline; }
             #btn-ii-shape .txt-desk { display: none; }
@@ -384,7 +400,10 @@
                     <div class="phys-input-group"><label>Orbit Rad</label><input type="number" id="in-rad" step="0.01"></div>
                     <div class="phys-input-group"><label>Orbit Theta</label><input type="number" id="in-th" step="1"></div>
                     <div class="phys-input-group"><label>Orbit Phi</label><input type="number" id="in-phi" step="1"></div>
-                    <div class="phys-input-group" style="grid-column: span 2;"><label>Lens Field of View (FOV)</label><input type="number" id="in-fov" step="1"></div>
+                    <div class="phys-input-group"><label>Lens Field of View</label><input type="number" id="in-fov" step="1"></div>
+                    
+                    <div class="phys-input-group"><label>Wedge High Alpha</label><input type="number" id="in-wedge-high" step="0.1" value="0.6" min="0" max="1"></div>
+                    <div class="phys-input-group" style="grid-column: span 2;"><label>Wedge Low Alpha</label><input type="number" id="in-wedge-low" step="0.1" value="0.1" min="0" max="1"></div>
                 </div>
                 <button class="btn-phys-apply" id="btn-phys-apply">APPLY PHYSICS OVERRIDE</button>
             </div>
@@ -463,7 +482,22 @@
 
     <script>
         const bgMusic = document.getElementById('bg-music');
-        const clickAudio = new Audio('click.mp3');
+        
+        // FIX 4: Preloaded Audio Pool to prevent rapid-click delays
+        const clickAudioPool = Array.from({length: 4}, () => {
+            const a = new Audio('click.mp3');
+            a.preload = 'auto';
+            return a;
+        });
+        let clickAudioIndex = 0;
+
+        function playClickSound() {
+            let sound = clickAudioPool[clickAudioIndex];
+            sound.volume = 0.6;
+            sound.currentTime = 0; // Reset time instead of cloning
+            sound.play().catch(e => {});
+            clickAudioIndex = (clickAudioIndex + 1) % clickAudioPool.length;
+        }
 
         window.addEventListener('DOMContentLoaded', () => {
             bgMusic.currentTime = 5.0; bgMusic.volume = 0.5;
@@ -475,11 +509,6 @@
                 });
             }
         });
-
-        function playClickSound() {
-            let sound = clickAudio.cloneNode();
-            sound.volume = 0.6; sound.play().catch(e => {});
-        }
 
         document.getElementById('initBtn').addEventListener('mousedown', playClickSound);
         document.getElementById('initBtn').addEventListener('touchstart', playClickSound, {passive: true});
@@ -565,7 +594,17 @@
 
         let phase = 'IDLE'; let windSpeedMult = 1.0;
         let targetParallaxX = 0, targetParallaxY = 0; let currentParallaxX = 0, currentParallaxY = 0;
-        let targetLoadProgress = 0; let currentLoadProgress = 0;
+        
+        // FIX 1: Network Load Sync setup
+        let targetLoadProgress = 0; 
+        let currentLoadProgress = 0;
+        let actualModelProgress = 0;
+        let minAnimProgress = 0;
+
+        const viewer = document.getElementById('c-arm-viewer');
+        viewer.addEventListener('progress', (e) => {
+            actualModelProgress = e.detail.totalProgress * 100;
+        });
 
         window.addEventListener('mousemove', (e) => {
             if(phase === 'DONE') return; 
@@ -584,13 +623,18 @@
         function startNetworkLoading() {
             const bar = document.getElementById('loading-bar-fill'); const txt = document.getElementById('percentage'); const statusLabel = document.getElementById('status-label');
             function step() {
+                // FIX 1: Drive the visual progress smoothly, but cap it by the actual model download!
+                minAnimProgress += 1.5; // Ensures animation takes at least a couple seconds to look cool
+                targetLoadProgress = Math.min(minAnimProgress, actualModelProgress);
+                
                 if (targetLoadProgress >= 100) {
                     targetLoadProgress = 100; txt.innerText = '100%'; bar.style.width = '100%'; statusLabel.innerText = 'SYSTEM LAUNCHING'; statusLabel.style.color = '#fff'; statusLabel.style.animation = 'none'; return;
                 }
-                const jump = Math.random() > 0.8 ? Math.random() * 8 : Math.random() * 2; targetLoadProgress = Math.min(100, targetLoadProgress + jump);
+                
                 bar.style.width = targetLoadProgress + '%'; txt.innerText = Math.floor(targetLoadProgress) + '%';
                 if (targetLoadProgress < 25) { statusLabel.innerText = 'INITIALIZING CORE'; } else if (targetLoadProgress < 50) { statusLabel.innerText = 'CALIBRATING GEOMETRY'; } else if (targetLoadProgress < 75) { statusLabel.innerText = 'TUBE WARM UP'; } else { statusLabel.innerText = 'FINALIZING PROTOCOLS'; }
-                setTimeout(step, Math.random() > 0.9 ? Math.random() * 500 : Math.random() * 80);
+                
+                setTimeout(step, 40);
             } step();
         }
 
@@ -729,9 +773,20 @@
             } catch (error) {}
         }
 
-        document.getElementById('btn-phys-apply').addEventListener('click', () => { viewer.cameraTarget = `${inTx.value}m ${inTy.value}m ${inTz.value}m`; viewer.cameraOrbit = `${inTh.value}deg ${inPhi.value}deg ${inRad.value}m`; viewer.fieldOfView = `${inFov.value}deg`; updateDashboard(); });
+        document.getElementById('btn-phys-apply').addEventListener('click', () => { 
+            viewer.cameraTarget = `${inTx.value}m ${inTy.value}m ${inTz.value}m`; 
+            viewer.cameraOrbit = `${inTh.value}deg ${inPhi.value}deg ${inRad.value}m`; 
+            viewer.fieldOfView = `${inFov.value}deg`; 
+            
+            // FIX 5: Apply Wedge Gradient values from Admin inputs
+            const wedgeHigh = document.getElementById('in-wedge-high').value || 0.6;
+            const wedgeLow = document.getElementById('in-wedge-low').value || 0.1;
+            document.querySelector('.left-filter').style.background = `linear-gradient(to right, rgba(5,5,5,${wedgeHigh}) 0%, rgba(5,5,5,${wedgeLow}) 100%)`;
+            document.querySelector('.right-filter').style.background = `linear-gradient(to left, rgba(5,5,5,${wedgeHigh}) 0%, rgba(5,5,5,${wedgeLow}) 100%)`;
+            
+            updateDashboard(); 
+        });
 
-        const viewer = document.getElementById('c-arm-viewer');
         const cArmGraphic = document.getElementById('c-arm-graphic');
         const modelSelect = document.getElementById('model-select');
         const loadingOverlay = document.getElementById('loading-overlay');
